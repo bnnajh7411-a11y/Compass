@@ -1,36 +1,77 @@
 using UnityEngine;
 
+[DisallowMultipleComponent]
 public class Checkpoint : MonoBehaviour
 {
     public int index;
     public bool isPassed = false;
 
-    void OnTriggerEnter2D(Collider2D other)
+    private SpriteRenderer spriteRenderer;
+    private SplineGuide owningGuide;
+    private Color defaultColor = Color.white;
+
+    private void Awake()
+    {
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer != null)
+        {
+            defaultColor = spriteRenderer.color;
+        }
+    }
+
+    public void Initialize(int checkpointIndex, SplineGuide guide)
+    {
+        index = checkpointIndex;
+        owningGuide = guide;
+        isPassed = false;
+        SetColor(defaultColor);
+    }
+
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if (other.CompareTag("PlayerBrush"))
         {
-            isPassed = true;
-            SpriteRenderer spriteRenderer = GetComponent<SpriteRenderer>();
-            if (spriteRenderer != null)
-            {
-                spriteRenderer.color = Color.green;
-            }
+            MarkPassed();
         }
+    }
+
+    public void MarkPassed()
+    {
+        if (isPassed)
+        {
+            return;
+        }
+
+        isPassed = true;
+        SetColor(Color.green);
+        ScoreManager.Instance?.Refresh();
     }
 
     public float CalculateAccuracy()
     {
-        Checkpoint[] cps = GetComponentsInChildren<Checkpoint>();
-        
-        // 0으로 나누기(Divide by Zero) 오류 방지
-        if (cps.Length == 0)
+        if (owningGuide != null)
         {
-            return 0f;
+            return owningGuide.CalculateAccuracy();
         }
 
-        int passedCount = 0;
-        foreach(Checkpoint cp in cps) if(cp.isPassed) passedCount++;
+        if (ScoreManager.Instance != null)
+        {
+            return ScoreManager.Instance.GetAccuracy();
+        }
 
-        return (float)passedCount / cps.Length * 100f;
+        return isPassed ? 100f : 0f;
+    }
+
+    private void SetColor(Color color)
+    {
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
+
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = color;
+        }
     }
 }
