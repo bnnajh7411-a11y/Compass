@@ -12,6 +12,7 @@ public class Rotate : MonoBehaviour
     private Rigidbody2D body2D;
     private CircleCollider2D brushCollider;
     private Transform currentTarget;
+    private Vector3[] trailPositionsBuffer;
 
     void Awake()
     {
@@ -58,6 +59,8 @@ public class Rotate : MonoBehaviour
         {
             trail.emitting = Input.GetKey(KeyCode.Space);
         }
+
+        EvaluateTrailAccuracy();
     }
 
     void FixedUpdate()
@@ -68,14 +71,14 @@ public class Rotate : MonoBehaviour
         }
 
         Vector2 center = (Vector2)currentTarget.position;
-        Vector2 offset = (Vector2)transform.position - center;
+        Vector2 offset = GetCurrentPosition() - center;
         if (offset.sqrMagnitude < 0.0001f)
         {
-            offset = Vector2.right * fixedRadius;
+            offset = Vector2.right;
         }
 
-        Vector2 rotatedOffset = (Vector2)(Quaternion.Euler(0f, 0f, orbitSpeed * Time.fixedDeltaTime) * offset);
-        MoveBrushTo(center + rotatedOffset);
+        Vector2 rotatedDirection = (Vector2)(Quaternion.Euler(0f, 0f, orbitSpeed * Time.fixedDeltaTime) * offset.normalized);
+        MoveBrushTo(center + (rotatedDirection * fixedRadius));
     }
 
     public void EnsurePlayerBrushSetup()
@@ -148,13 +151,17 @@ public class Rotate : MonoBehaviour
             return;
         }
 
-        Vector3 direction = (transform.position - newTarget.position).normalized;
-        if (direction == Vector3.zero)
+        Vector2 direction = GetCurrentPosition() - (Vector2)newTarget.position;
+        if (direction.sqrMagnitude < 0.0001f)
         {
-            direction = Vector3.right;
+            direction = Vector2.right;
+        }
+        else
+        {
+            direction.Normalize();
         }
 
-        MoveBrushTo((Vector2)(newTarget.position + (direction * fixedRadius)));
+        MoveBrushTo((Vector2)newTarget.position + (direction * fixedRadius));
     }
 
     private void MoveBrushTo(Vector2 worldPosition)
@@ -166,5 +173,47 @@ public class Rotate : MonoBehaviour
         }
 
         transform.position = new Vector3(worldPosition.x, worldPosition.y, transform.position.z);
+    }
+
+    private Vector2 GetCurrentPosition()
+    {
+        if (body2D != null)
+        {
+            return body2D.position;
+        }
+
+        return transform.position;
+    }
+
+    private void EvaluateTrailAccuracy()
+    {
+        if (trail == null || ScoreManager.Instance == null)
+        {
+            return;
+        }
+
+        if (!trail.emitting)
+        {
+            return;
+        }
+
+        int positionCount = trail.positionCount;
+        if (positionCount < 2)
+        {
+            return;
+        }
+
+        if (trailPositionsBuffer == null || trailPositionsBuffer.Length < positionCount)
+        {
+            trailPositionsBuffer = new Vector3[positionCount];
+        }
+
+        int copiedPositions = trail.GetPositions(trailPositionsBuffer);
+        if (copiedPositions <= 0)
+        {
+            return;
+        }
+
+        ScoreManager.Instance.EvaluateTrail(trailPositionsBuffer, copiedPositions);
     }
 }

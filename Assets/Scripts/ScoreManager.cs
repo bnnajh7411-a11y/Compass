@@ -9,6 +9,11 @@ public class ScoreManager : MonoBehaviour
 
     private readonly List<Checkpoint> checkpoints = new List<Checkpoint>();
     private Text statusText;
+    private SplineGuide guide;
+    private float currentAccuracy;
+    private float currentTrailPrecision;
+    private int coveredGuideSamples;
+    private int totalGuideSamples;
 
     private void Awake()
     {
@@ -40,9 +45,20 @@ public class ScoreManager : MonoBehaviour
         Refresh();
     }
 
+    public void BindGuide(SplineGuide splineGuide)
+    {
+        guide = splineGuide;
+        totalGuideSamples = guide != null ? guide.AccuracySampleCount : 0;
+        Refresh();
+    }
+
     public void Clear()
     {
         checkpoints.Clear();
+        currentAccuracy = 0f;
+        currentTrailPrecision = 0f;
+        coveredGuideSamples = 0;
+        totalGuideSamples = guide != null ? guide.AccuracySampleCount : 0;
         Refresh();
     }
 
@@ -70,54 +86,49 @@ public class ScoreManager : MonoBehaviour
         }
     }
 
-    public float GetAccuracy()
+    public void EvaluateTrail(Vector3[] trailPositions, int positionCount)
     {
-        int total = 0;
-        int passed = 0;
+        totalGuideSamples = guide != null ? guide.AccuracySampleCount : 0;
+
+        if (guide == null || trailPositions == null || positionCount < 2 || totalGuideSamples == 0)
+        {
+            currentAccuracy = 0f;
+            currentTrailPrecision = 0f;
+            coveredGuideSamples = 0;
+            Refresh();
+            return;
+        }
 
         foreach (Checkpoint checkpoint in checkpoints)
         {
-            if (checkpoint == null)
+            if (checkpoint == null || checkpoint.isPassed)
             {
                 continue;
             }
 
-            total++;
-            if (checkpoint.isPassed)
+            if (checkpoint.IsTouchedByTrail(trailPositions, positionCount, guide.CheckpointHitTolerance))
             {
-                passed++;
+                checkpoint.MarkPassed();
             }
         }
 
-        if (total == 0)
-        {
-            return 0f;
-        }
+        coveredGuideSamples = guide.CountCoveredSamples(trailPositions, positionCount);
+        currentTrailPrecision = CalculateTrailPrecision(trailPositions, positionCount);
 
-        return (float)passed / total * 100f;
+        float coverageRatio = totalGuideSamples > 0 ? (float)coveredGuideSamples / totalGuideSamples : 0f;
+        currentAccuracy = coverageRatio * currentTrailPrecision * 100f;
+        Refresh();
+    }
+
+    public float GetAccuracy()
+    {
+        return currentAccuracy;
     }
 
     public string GetProgressText()
     {
-        int total = 0;
-        int passed = 0;
-
-        foreach (Checkpoint checkpoint in checkpoints)
-        {
-            if (checkpoint == null)
-            {
-                continue;
-            }
-
-            total++;
-            if (checkpoint.isPassed)
-            {
-                passed++;
-            }
-        }
-
-        float accuracy = total == 0 ? 0f : (float)passed / total * 100f;
-        return $"정확도 {accuracy:0}% ({passed}/{total})";
+        float trailPrecisionPercent = currentTrailPrecision * 100f;
+        return $"Accuracy {currentAccuracy:0}% ({coveredGuideSamples}/{totalGuideSamples}) | Line {trailPrecisionPercent:0}%";
     }
 
     public void Refresh()
@@ -126,5 +137,41 @@ public class ScoreManager : MonoBehaviour
         {
             statusText.text = GetProgressText();
         }
+    }
+
+    private float CalculateTrailPrecision(Vector3[] trailPositions, int positionCount)
+    {
+        if (guide == null || trailPositions == null || positionCount <= 0)
+        {
+            return 0f;
+        }
+
+        float perfectTolerance = guide.PerfectTrailTolerance;
+        float missTolerance = guide.MissTrailTolerance;
+        float totalScore = 0f;
+
+        for (int i = 0; i < positionCount; i++)
+        {
+            float distanceToGuide = guide.GetDistanceToGuide(trailPositions[i]);
+            totalScore += EvaluatePointScore(distanceToGuide, perfectTolerance, missTolerance);
+        }
+
+        return totalScore / positionCount;
+    }
+
+    private static float EvaluatePointScore(float distanceToGuide, float perfectTolerance, float missTolerance)
+    {
+        if (distanceToGuide <= perfectTolerance)
+        {
+            return 1f;
+        }
+
+        if (distanceToGuide >= missTolerance)
+        {
+            return 0f;
+        }
+
+        float normalizedDistance = (distanceToGuide - perfectTolerance) / (missTolerance - perfectTolerance);
+        return 1f - normalizedDistance;
     }
 }

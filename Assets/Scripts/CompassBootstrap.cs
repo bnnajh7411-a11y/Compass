@@ -100,6 +100,7 @@ public class CompassBootstrap : MonoBehaviour
             guide.checkpointPrefab = CreateCheckpointTemplate();
         }
         guide.RebuildCheckpoints();
+        scoreManager.BindGuide(guide);
 
         if (previewLayer >= 0)
         {
@@ -163,7 +164,7 @@ public class CompassBootstrap : MonoBehaviour
         rectTransform.anchorMin = new Vector2(1f, 0f);
         rectTransform.anchorMax = new Vector2(1f, 0f);
         rectTransform.pivot = new Vector2(1f, 0f);
-        rectTransform.sizeDelta = new Vector2(260f, 28f);
+        rectTransform.sizeDelta = new Vector2(360f, 28f);
         rectTransform.anchoredPosition = new Vector2(-24f, 20f);
 
         return text;

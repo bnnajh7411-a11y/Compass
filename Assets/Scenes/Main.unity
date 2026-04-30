@@ -910,6 +910,11 @@ MonoBehaviour:
   checkpointPrefab: {fileID: 0}
   resolution: 20
   checkpointRoot: {fileID: 0}
+  accuracyResolution: 120
+  checkpointHitTolerance: 0.04
+  coverageTolerance: 0.045
+  perfectTrailTolerance: 0.04
+  missTrailTolerance: 0.085
 --- !u!114 &1171336727
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1039,8 +1044,8 @@ Transform:
   m_GameObject: {fileID: 1171336725}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -0.04, y: -0, z: -0}
-  m_LocalScale: {x: 4.2885027, y: 4.2885027, z: 4.2885027}
+  m_LocalPosition: {x: -0.006, y: -0, z: -0}
+  m_LocalScale: {x: 3.9357686, y: 3.9357686, z: 3.9357686}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1625,6 +1630,11 @@ MonoBehaviour:
   checkpointPrefab: {fileID: 0}
   resolution: 20
   checkpointRoot: {fileID: 0}
+  accuracyResolution: 120
+  checkpointHitTolerance: 0.04
+  coverageTolerance: 0.045
+  perfectTrailTolerance: 0.04
+  missTrailTolerance: 0.085
 --- !u!1 &1804625395
 GameObject:
   m_ObjectHideFlags: 0
