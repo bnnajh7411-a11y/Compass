@@ -1,44 +1,41 @@
 using UnityEngine;
 
+[DisallowMultipleComponent]
 public class ConnectedLine : MonoBehaviour
 {
-    public Transform target1;
-    public Transform target2;
-    public Transform satellite;
+    [SerializeField] private Rotate rotate;
+    private Transform satellite;
 
-    private Transform currentTarget;
-
-	void Start()
+    private void Awake()
     {
-        currentTarget = target1 != null ? target1 : target2;
+        if (rotate == null)
+        {
+            rotate = Object.FindFirstObjectByType<Rotate>();
+        }
+
+        satellite = rotate != null ? rotate.transform : null;
     }
 
-	void Update()
+    private void LateUpdate()
     {
-        if (target1 == null || target2 == null || satellite == null)
+        if (rotate == null)
         {
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.D))
+        Transform currentTarget = rotate.CurrentTargetTransform;
+        if (currentTarget == null || satellite == null)
         {
-            currentTarget = (currentTarget == target1) ? target2 : target1;
-        }
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            currentTarget = (currentTarget == target2) ? target1 : target2;
+            return;
         }
 
-        if (currentTarget != null && satellite != null)
-        {
-            float distance = Vector3.Distance(currentTarget.position, satellite.position);
+        float distance = Vector3.Distance(currentTarget.position, satellite.position);
 
-            transform.position = (currentTarget.position + satellite.position) / 2.0f;
+        transform.position = (currentTarget.position + satellite.position) / 2.0f;
 
-            transform.localScale = new Vector3(distance, transform.localScale.y, transform.localScale.z);
+        transform.localScale = new Vector3(distance, transform.localScale.y, transform.localScale.z);
 
-            Vector3 direction = satellite.position - currentTarget.position;
-            transform.right = direction;
-        }
+        Vector3 direction = satellite.position - currentTarget.position;
+        transform.right = direction;
     }
 }

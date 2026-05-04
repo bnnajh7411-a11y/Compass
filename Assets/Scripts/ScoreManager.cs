@@ -7,6 +7,9 @@ public class ScoreManager : MonoBehaviour
 {
     public static ScoreManager Instance { get; private set; }
 
+    private const float PrecisionFalloffExponent = 4f;
+    private const float CheckpointBonusWeight = 0.225f;
+
     private readonly List<Checkpoint> checkpoints = new List<Checkpoint>();
     private Text statusText;
     private SplineGuide guide;
@@ -62,6 +65,17 @@ public class ScoreManager : MonoBehaviour
         Refresh();
     }
 
+    public void ResetAttempt()
+    {
+        if (guide != null)
+        {
+            guide.RebuildCheckpoints();
+            return;
+        }
+
+        Clear();
+    }
+
     public void RegisterCheckpoint(Checkpoint checkpoint)
     {
         if (checkpoint == null || checkpoints.Contains(checkpoint))
@@ -71,19 +85,6 @@ public class ScoreManager : MonoBehaviour
 
         checkpoints.Add(checkpoint);
         Refresh();
-    }
-
-    public void UnregisterCheckpoint(Checkpoint checkpoint)
-    {
-        if (checkpoint == null)
-        {
-            return;
-        }
-
-        if (checkpoints.Remove(checkpoint))
-        {
-            Refresh();
-        }
     }
 
     public void EvaluateTrail(Vector3[] trailPositions, int positionCount)
@@ -116,7 +117,9 @@ public class ScoreManager : MonoBehaviour
         currentTrailPrecision = CalculateTrailPrecision(trailPositions, positionCount);
 
         float coverageRatio = totalGuideSamples > 0 ? (float)coveredGuideSamples / totalGuideSamples : 0f;
-        currentAccuracy = coverageRatio * currentTrailPrecision * 100f;
+        float checkpointProgress = CalculateCheckpointProgress();
+        float baseAccuracy = coverageRatio * currentTrailPrecision;
+        currentAccuracy = Mathf.Clamp01(baseAccuracy + (checkpointProgress * CheckpointBonusWeight)) * 100f;
         Refresh();
     }
 
@@ -172,6 +175,40 @@ public class ScoreManager : MonoBehaviour
         }
 
         float normalizedDistance = (distanceToGuide - perfectTolerance) / (missTolerance - perfectTolerance);
-        return 1f - normalizedDistance;
+        float remainingScore = 1f - normalizedDistance;
+        return Mathf.Pow(remainingScore, PrecisionFalloffExponent);
+    }
+
+    private float CalculateCheckpointProgress()
+    {
+        if (checkpoints.Count == 0)
+        {
+            return 0f;
+        }
+
+        int validCheckpointCount = 0;
+        int passedCheckpointCount = 0;
+
+        for (int i = 0; i < checkpoints.Count; i++)
+        {
+            Checkpoint checkpoint = checkpoints[i];
+            if (checkpoint == null)
+            {
+                continue;
+            }
+
+            validCheckpointCount++;
+            if (checkpoint.isPassed)
+            {
+                passedCheckpointCount++;
+            }
+        }
+
+        if (validCheckpointCount == 0)
+        {
+            return 0f;
+        }
+
+        return (float)passedCheckpointCount / validCheckpointCount;
     }
 }

@@ -1,8 +1,11 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(TrailRenderer))]
 public class Rotate : MonoBehaviour
 {
+    private const string ResultSceneName = "Result";
+
     public GameObject target1;
     public GameObject target2;
     public float orbitSpeed = 50.0f;
@@ -35,6 +38,19 @@ public class Rotate : MonoBehaviour
 
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            ClearCurrentTrail();
+            ScoreManager.Instance?.ResetAttempt();
+            return;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+        {
+            SubmitResultAndLoadScene();
+            return;
+        }
+
         if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.D))
         {
             ToggleTarget();
@@ -144,6 +160,32 @@ public class Rotate : MonoBehaviour
         }
     }
 
+    public Transform CurrentTargetTransform => currentTarget;
+
+    public void ApplyTargetPositions(Vector3 target1Position, Vector3 target2Position)
+    {
+        if (target1 != null)
+        {
+            Vector3 position = target1Position;
+            position.z = target1.transform.position.z;
+            target1.transform.position = position;
+        }
+
+        if (target2 != null)
+        {
+            Vector3 position = target2Position;
+            position.z = target2.transform.position.z;
+            target2.transform.position = position;
+        }
+
+        if (currentTarget == null)
+        {
+            currentTarget = GetInitialTarget();
+        }
+
+        SetPositionByRadius(currentTarget);
+    }
+
     void SetPositionByRadius(Transform newTarget)
     {
         if (newTarget == null)
@@ -215,5 +257,30 @@ public class Rotate : MonoBehaviour
         }
 
         ScoreManager.Instance.EvaluateTrail(trailPositionsBuffer, copiedPositions);
+    }
+
+    private void SubmitResultAndLoadScene()
+    {
+        float accuracy = 0f;
+        string progressText = "Accuracy 0% (0/0) | Line 0%";
+
+        if (ScoreManager.Instance != null)
+        {
+            accuracy = ScoreManager.Instance.GetAccuracy();
+            progressText = ScoreManager.Instance.GetProgressText();
+        }
+
+        CompassGameState.StoreResult(accuracy, progressText);
+        SceneManager.LoadScene(ResultSceneName);
+    }
+
+    private void ClearCurrentTrail()
+    {
+        if (trail != null)
+        {
+            trail.Clear();
+        }
+
+        trailPositionsBuffer = null;
     }
 }

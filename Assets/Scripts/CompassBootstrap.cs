@@ -6,16 +6,19 @@ using UnityEngine.UI;
 [DefaultExecutionOrder(-1000)]
 public class CompassBootstrap : MonoBehaviour
 {
+    private const float GridSpacing = 0.5f;
+    private const float GridLineWidth = 0.02f;
+    private const float GridPadding = 1.25f;
+    private const int GridSortingOrder = -100;
+    private const string MainSceneName = "Main";
     private const string PreviewLayerName = "CompassPreview";
+    private static readonly Color GridColor = new Color(0.7f, 0.7f, 0.7f, 0.5f);
 
     private static CompassBootstrap instance;
 
     private GameObject runtimeRoot;
     private RenderTexture previewTexture;
     private Camera previewCamera;
-    private ShapePreviewRenderer previewRenderer;
-    private ScoreManager scoreManager;
-    private Text statusText;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Install()
@@ -42,6 +45,12 @@ public class CompassBootstrap : MonoBehaviour
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        if (scene.name != MainSceneName)
+        {
+            CleanupRuntime();
+            return;
+        }
+
         BuildScene();
     }
 
@@ -68,30 +77,25 @@ public class CompassBootstrap : MonoBehaviour
             mainCamera.cullingMask &= ~(1 << previewLayer);
         }
 
-        SplineContainer splineContainer = Object.FindFirstObjectByType<SplineContainer>();
-        if (splineContainer == null)
+        SplineGuide guide = SelectRandomGuide(out SplineContainer splineContainer);
+        if (guide == null || splineContainer == null)
         {
-            Debug.LogWarning("CompassBootstrap: No SplineContainer was found.");
+            Debug.LogWarning("CompassBootstrap: No usable SplineGuide or SplineContainer was found.");
             return;
         }
 
         runtimeRoot = new GameObject("[CompassRuntime]");
         runtimeRoot.transform.SetParent(transform, false);
 
-        scoreManager = CreateScoreManager();
-        statusText = CreateStatusText();
+        ScoreManager scoreManager = CreateScoreManager();
+        Text statusText = CreateStatusText();
         scoreManager.BindStatusText(statusText);
 
         Rotate rotate = Object.FindFirstObjectByType<Rotate>();
         if (rotate != null)
         {
             rotate.EnsurePlayerBrushSetup();
-        }
-
-        SplineGuide guide = splineContainer.GetComponent<SplineGuide>();
-        if (guide == null)
-        {
-            guide = splineContainer.gameObject.AddComponent<SplineGuide>();
+            rotate.ApplyTargetPositions(guide.Center1WorldPosition, guide.Center2WorldPosition);
         }
 
         guide.splineContainer = splineContainer;
@@ -104,13 +108,109 @@ public class CompassBootstrap : MonoBehaviour
 
         if (previewLayer >= 0)
         {
-            previewRenderer = CreatePreviewRenderer(splineContainer, previewLayer);
+            ShapePreviewRenderer previewRenderer = CreatePreviewRenderer(splineContainer, previewLayer);
             Bounds bounds = previewRenderer.Refresh();
+            Vector2 gridCenter = new Vector2(bounds.center.x, bounds.center.y);
+            Vector2 gridHalfExtents = GetGridHalfExtents(mainCamera, bounds);
+            Bounds gridBounds = new Bounds(
+                new Vector3(gridCenter.x, gridCenter.y, 0f),
+                new Vector3(gridHalfExtents.x * 2f, gridHalfExtents.y * 2f, 1f));
+            CreateGridBackdrop("[CompassGrid]", gridBounds, mainCamera.gameObject.layer);
+            CreateGridBackdrop("[CompassPreviewGrid]", gridBounds, previewLayer);
             CreatePreviewCamera(previewLayer, bounds);
             CreatePreviewPanel();
         }
+        else
+        {
+            Bounds gridBounds = GetFallbackGridBounds(mainCamera);
+            CreateGridBackdrop("[CompassGrid]", gridBounds, mainCamera.gameObject.layer);
+        }
 
         scoreManager.Refresh();
+    }
+
+    private SplineGuide SelectRandomGuide(out SplineContainer splineContainer)
+    {
+        splineContainer = null;
+
+        SplineGuide[] guides = Object.FindObjectsByType<SplineGuide>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        if (guides != null && guides.Length > 0)
+        {
+            int selectedIndex = Random.Range(0, guides.Length);
+            SplineGuide selectedGuide = null;
+
+            for (int i = 0; i < guides.Length; i++)
+            {
+                SplineGuide guide = guides[i];
+                if (guide == null)
+                {
+                    continue;
+                }
+
+                bool isSelected = i == selectedIndex;
+                guide.enabled = isSelected;
+                guide.gameObject.SetActive(isSelected);
+
+                if (isSelected)
+                {
+                    selectedGuide = guide;
+                }
+            }
+
+            if (selectedGuide != null)
+            {
+                splineContainer = ResolveSplineContainer(selectedGuide);
+                if (splineContainer != null)
+                {
+                    selectedGuide.splineContainer = splineContainer;
+                    if (guides.Length > 1)
+                    {
+                        Debug.Log($"CompassBootstrap: Selected guide '{selectedGuide.name}' from {guides.Length} candidates.");
+                    }
+
+                    return selectedGuide;
+                }
+
+                Debug.LogWarning($"CompassBootstrap: Selected guide '{selectedGuide.name}' does not have a SplineContainer.");
+            }
+        }
+
+        splineContainer = Object.FindFirstObjectByType<SplineContainer>();
+        if (splineContainer == null)
+        {
+            return null;
+        }
+
+        SplineGuide fallbackGuide = splineContainer.GetComponent<SplineGuide>();
+        if (fallbackGuide == null)
+        {
+            fallbackGuide = splineContainer.gameObject.AddComponent<SplineGuide>();
+        }
+
+        fallbackGuide.enabled = true;
+        fallbackGuide.splineContainer = splineContainer;
+        return fallbackGuide;
+    }
+
+    private static SplineContainer ResolveSplineContainer(SplineGuide guide)
+    {
+        if (guide == null)
+        {
+            return null;
+        }
+
+        if (guide.splineContainer != null)
+        {
+            return guide.splineContainer;
+        }
+
+        SplineContainer container = guide.GetComponent<SplineContainer>();
+        if (container != null)
+        {
+            return container;
+        }
+
+        return guide.GetComponentInChildren<SplineContainer>(true);
     }
 
     private void EnsureSingleAudioListener(Camera mainCamera)
@@ -138,6 +238,7 @@ public class CompassBootstrap : MonoBehaviour
             listener.enabled = false;
         }
     }
+
 
     private ScoreManager CreateScoreManager()
     {
@@ -257,6 +358,18 @@ public class CompassBootstrap : MonoBehaviour
         return renderer;
     }
 
+    private GridBackdropRenderer CreateGridBackdrop(string objectName, Bounds bounds, int layer)
+    {
+        GameObject gridObject = new GameObject(objectName);
+        gridObject.transform.SetParent(runtimeRoot.transform, false);
+        gridObject.layer = layer;
+
+        GridBackdropRenderer renderer = gridObject.AddComponent<GridBackdropRenderer>();
+        renderer.Configure(bounds, GridSpacing, GridLineWidth, GridColor, GridSortingOrder);
+        renderer.Refresh();
+        return renderer;
+    }
+
     private void CreatePreviewCamera(int previewLayer, Bounds bounds)
     {
         GameObject cameraObject = new GameObject("[CompassPreviewCamera]");
@@ -278,6 +391,33 @@ public class CompassBootstrap : MonoBehaviour
         previewCamera.targetTexture = previewTexture;
 
         FramePreviewCamera(bounds);
+    }
+
+    private static Vector2 GetGridHalfExtents(Camera mainCamera, Bounds previewBounds)
+    {
+        Vector2 cameraHalfExtents = GetCameraHalfExtents(mainCamera);
+        Vector2 previewHalfExtents = new Vector2(previewBounds.extents.x, previewBounds.extents.y);
+        return Vector2.Max(cameraHalfExtents, previewHalfExtents) + Vector2.one * GridPadding;
+    }
+
+    private static Vector2 GetCameraHalfExtents(Camera camera)
+    {
+        if (camera == null)
+        {
+            return Vector2.one * 5f;
+        }
+
+        float aspect = Mathf.Max(camera.aspect, 0.01f);
+        return new Vector2(camera.orthographicSize * aspect, camera.orthographicSize);
+    }
+
+    private static Bounds GetFallbackGridBounds(Camera mainCamera)
+    {
+        Vector2 halfExtents = GetCameraHalfExtents(mainCamera) + Vector2.one * GridPadding;
+        Vector3 center = mainCamera != null ? mainCamera.transform.position : Vector3.zero;
+        return new Bounds(
+            new Vector3(center.x, center.y, 0f),
+            new Vector3(halfExtents.x * 2f, halfExtents.y * 2f, 1f));
     }
 
     private void FramePreviewCamera(Bounds bounds)
@@ -356,8 +496,5 @@ public class CompassBootstrap : MonoBehaviour
         runtimeRoot = null;
         previewTexture = null;
         previewCamera = null;
-        previewRenderer = null;
-        scoreManager = null;
-        statusText = null;
     }
 }

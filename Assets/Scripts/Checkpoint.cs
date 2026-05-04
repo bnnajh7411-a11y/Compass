@@ -3,12 +3,10 @@ using UnityEngine;
 [DisallowMultipleComponent]
 public class Checkpoint : MonoBehaviour
 {
-    public int index;
     public bool isPassed = false;
 
     private SpriteRenderer spriteRenderer;
     private CircleCollider2D checkpointCollider;
-    private SplineGuide owningGuide;
     private Color defaultColor = Color.white;
 
     private void Awake()
@@ -21,10 +19,8 @@ public class Checkpoint : MonoBehaviour
         }
     }
 
-    public void Initialize(int checkpointIndex, SplineGuide guide)
+    public void Initialize()
     {
-        index = checkpointIndex;
-        owningGuide = guide;
         isPassed = false;
         SetColor(defaultColor);
     }
@@ -39,21 +35,6 @@ public class Checkpoint : MonoBehaviour
         isPassed = true;
         SetColor(Color.green);
         ScoreManager.Instance?.Refresh();
-    }
-
-    public float CalculateAccuracy()
-    {
-        if (owningGuide != null)
-        {
-            return owningGuide.CalculateAccuracy();
-        }
-
-        if (ScoreManager.Instance != null)
-        {
-            return ScoreManager.Instance.GetAccuracy();
-        }
-
-        return isPassed ? 100f : 0f;
     }
 
     public bool IsTouchedByTrail(Vector3[] trailPositions, int positionCount, float hitTolerance)
