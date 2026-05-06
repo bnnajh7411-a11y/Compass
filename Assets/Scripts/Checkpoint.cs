@@ -7,22 +7,18 @@ public class Checkpoint : MonoBehaviour
 
     private SpriteRenderer spriteRenderer;
     private CircleCollider2D checkpointCollider;
-    private Color defaultColor = Color.white;
 
     private void Awake()
     {
         spriteRenderer = GetComponent<SpriteRenderer>();
         checkpointCollider = GetComponent<CircleCollider2D>();
-        if (spriteRenderer != null)
-        {
-            defaultColor = spriteRenderer.color;
-        }
+        HideVisual();
     }
 
     public void Initialize()
     {
         isPassed = false;
-        SetColor(defaultColor);
+        HideVisual();
     }
 
     public void MarkPassed()
@@ -33,7 +29,6 @@ public class Checkpoint : MonoBehaviour
         }
 
         isPassed = true;
-        SetColor(Color.green);
         ScoreManager.Instance?.Refresh();
     }
 
@@ -59,7 +54,7 @@ public class Checkpoint : MonoBehaviour
         return false;
     }
 
-    private void SetColor(Color color)
+    private void HideVisual()
     {
         if (spriteRenderer == null)
         {
@@ -68,7 +63,7 @@ public class Checkpoint : MonoBehaviour
 
         if (spriteRenderer != null)
         {
-            spriteRenderer.color = color;
+            spriteRenderer.enabled = false;
         }
     }
 

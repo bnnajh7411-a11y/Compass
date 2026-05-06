@@ -95,7 +95,7 @@ public class CompassBootstrap : MonoBehaviour
         if (rotate != null)
         {
             rotate.EnsurePlayerBrushSetup();
-            rotate.ApplyTargetPositions(guide.Center1WorldPosition, guide.Center2WorldPosition);
+            rotate.ApplyTargetPositions(guide.Center1WorldPosition, guide.Center2WorldPosition, guide.Center3WorldPosition);
         }
 
         guide.splineContainer = splineContainer;

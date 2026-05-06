@@ -53,12 +53,16 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 Assets/Scripts/
  Checkpoint.cs
  CompassBootstrap.cs
+ CompassGameState.cs
  ConnectedLine.cs
+ GridBackdropRenderer.cs
+ ResultSceneController.cs
  Rotate.cs
  RuntimeSpriteFactory.cs
  ScoreManager.cs
  ShapePreviewRenderer.cs
  SplineGuide.cs
+ StartSceneController.cs
 Temp/obj/Assembly-CSharp/.NETStandard,Version=v2.1.AssemblyAttributes.cs
 
 [metadataReferences]

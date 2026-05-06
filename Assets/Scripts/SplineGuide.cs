@@ -12,6 +12,7 @@ public class SplineGuide : MonoBehaviour
     // World-space offsets so the guide scale does not stretch the center positions.
     [SerializeField] private Vector3 center1WorldOffset = new Vector3(-2f, 0f, 0f);
     [SerializeField] private Vector3 center2WorldOffset = new Vector3(2f, 0f, 0f);
+    [SerializeField] private Vector3 center3WorldOffset = new Vector3(0f, 2f, 0f);
 
     [SerializeField] private Transform checkpointRoot;
     [SerializeField, Min(8)] private int accuracyResolution = 120;
@@ -40,6 +41,7 @@ public class SplineGuide : MonoBehaviour
     public float PerfectTrailTolerance => perfectTrailTolerance;
     public Vector3 Center1WorldPosition => transform.position + center1WorldOffset;
     public Vector3 Center2WorldPosition => transform.position + center2WorldOffset;
+    public Vector3 Center3WorldPosition => transform.position + center3WorldOffset;
     public float MissTrailTolerance
     {
         get => Mathf.Max(missTrailTolerance, perfectTrailTolerance + 0.001f);
