@@ -235,16 +235,16 @@ public class CompassBootstrap : MonoBehaviour
 
         Text text = scoreObject.AddComponent<Text>();
         text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        text.fontSize = 18;
+        text.fontSize = 25;
         text.alignment = TextAnchor.LowerLeft;
         text.color = new Color(0.94f, 0.94f, 0.94f, 1f);
         text.text = "정확도 0% (0/0)";
 
         RectTransform rectTransform = scoreObject.GetComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(1f, 0f);
-        rectTransform.anchorMax = new Vector2(1f, 0f);
-        rectTransform.pivot = new Vector2(1f, 0f);
-        rectTransform.sizeDelta = new Vector2(360f, 28f);
+        rectTransform.anchorMin = new Vector2(0.5f, 0f);
+        rectTransform.anchorMax = new Vector2(0.5f, 0f);
+        rectTransform.pivot = new Vector2(0.5f, 0f);
+        rectTransform.sizeDelta = new Vector2(300f, 28f);
         rectTransform.anchoredPosition = new Vector2(-24f, 20f);
 
         return text;
