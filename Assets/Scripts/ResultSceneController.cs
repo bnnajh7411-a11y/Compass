@@ -254,6 +254,8 @@ public class ResultSceneController : MonoBehaviour
         text.color = color;
         text.text = textValue;
         text.raycastTarget = false;
+        text.horizontalOverflow = HorizontalWrapMode.Overflow;
+        text.verticalOverflow = VerticalWrapMode.Overflow;
 
         RectTransform rectTransform = textObject.GetComponent<RectTransform>();
         rectTransform.anchorMin = anchorMin;

@@ -65,8 +65,6 @@ public class CompassBootstrap : MonoBehaviour
             return;
         }
 
-        EnsureSingleAudioListener(mainCamera);
-
         int previewLayer = LayerMask.NameToLayer(PreviewLayerName);
         if (previewLayer < 0)
         {
@@ -95,7 +93,15 @@ public class CompassBootstrap : MonoBehaviour
         if (rotate != null)
         {
             rotate.EnsurePlayerBrushSetup();
-            rotate.ApplyTargetPositions(guide.Center1WorldPosition, guide.Center2WorldPosition, guide.Center3WorldPosition);
+            if (rotate.target3 == null)
+            {
+                Debug.LogWarning("CompassBootstrap: Rotate.target3 is not assigned in the scene.");
+            }
+
+            rotate.ApplyTargetPositions(
+                guide.Center1WorldPosition,
+                guide.Center2WorldPosition,
+                guide.Center3WorldPosition);
         }
 
         guide.splineContainer = splineContainer;
@@ -212,33 +218,6 @@ public class CompassBootstrap : MonoBehaviour
 
         return guide.GetComponentInChildren<SplineContainer>(true);
     }
-
-    private void EnsureSingleAudioListener(Camera mainCamera)
-    {
-        AudioListener[] listeners = Object.FindObjectsByType<AudioListener>(FindObjectsSortMode.None);
-        if (listeners == null || listeners.Length == 0)
-        {
-            mainCamera.gameObject.AddComponent<AudioListener>();
-            return;
-        }
-
-        AudioListener primaryListener = mainCamera.GetComponent<AudioListener>();
-        if (primaryListener == null)
-        {
-            primaryListener = mainCamera.gameObject.AddComponent<AudioListener>();
-        }
-
-        foreach (AudioListener listener in listeners)
-        {
-            if (listener == null || listener == primaryListener)
-            {
-                continue;
-            }
-
-            listener.enabled = false;
-        }
-    }
-
 
     private ScoreManager CreateScoreManager()
     {

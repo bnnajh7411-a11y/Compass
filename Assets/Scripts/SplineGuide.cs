@@ -22,6 +22,7 @@ public class SplineGuide : MonoBehaviour
     [SerializeField, Min(0.01f)] private float missTrailTolerance = 0.085f;
 
     private readonly List<SplineSamplePath> accuracySamplePaths = new List<SplineSamplePath>();
+    private float guideSizeMultiplier = 1f;
     private bool hasBuilt;
 
     private sealed class SplineSamplePath
@@ -36,16 +37,16 @@ public class SplineGuide : MonoBehaviour
         public bool Closed { get; }
     }
 
-    public float CheckpointHitTolerance => checkpointHitTolerance;
-    public float CoverageTolerance => coverageTolerance;
-    public float PerfectTrailTolerance => perfectTrailTolerance;
+    public float CoverageTolerance => coverageTolerance * guideSizeMultiplier;
+    public float PerfectTrailTolerance => perfectTrailTolerance * guideSizeMultiplier;
     public Vector3 Center1WorldPosition => transform.position + center1WorldOffset;
     public Vector3 Center2WorldPosition => transform.position + center2WorldOffset;
     public Vector3 Center3WorldPosition => transform.position + center3WorldOffset;
     public float MissTrailTolerance
     {
-        get => Mathf.Max(missTrailTolerance, perfectTrailTolerance + 0.001f);
+        get => Mathf.Max(missTrailTolerance, perfectTrailTolerance + 0.001f) * guideSizeMultiplier;
     }
+    public float CheckpointHitTolerance => checkpointHitTolerance * guideSizeMultiplier;
     public int AccuracySampleCount
     {
         get
@@ -292,6 +293,7 @@ public class SplineGuide : MonoBehaviour
     private void RebuildAccuracySamples()
     {
         accuracySamplePaths.Clear();
+        guideSizeMultiplier = 1f;
 
         if (splineContainer == null)
         {
@@ -304,6 +306,10 @@ public class SplineGuide : MonoBehaviour
         }
 
         int count = Mathf.Max(8, accuracyResolution);
+        bool hasBounds = false;
+        Vector2 min = Vector2.zero;
+        Vector2 max = Vector2.zero;
+
         for (int splineIndex = 0; splineIndex < splines.Count; splineIndex++)
         {
             Spline spline = splines[splineIndex];
@@ -318,10 +324,32 @@ public class SplineGuide : MonoBehaviour
             {
                 float t = (float)i / count;
                 Vector3 worldPos = splineContainer.EvaluatePosition(splineIndex, t);
-                sampledPoints.Add(new Vector2(worldPos.x, worldPos.y));
+                Vector2 samplePoint = new Vector2(worldPos.x, worldPos.y);
+                sampledPoints.Add(samplePoint);
+
+                if (!hasBounds)
+                {
+                    min = samplePoint;
+                    max = samplePoint;
+                    hasBounds = true;
+                }
+                else
+                {
+                    min.x = Mathf.Min(min.x, samplePoint.x);
+                    min.y = Mathf.Min(min.y, samplePoint.y);
+                    max.x = Mathf.Max(max.x, samplePoint.x);
+                    max.y = Mathf.Max(max.y, samplePoint.y);
+                }
             }
 
             accuracySamplePaths.Add(new SplineSamplePath(sampledPoints, spline.Closed));
+        }
+
+        if (hasBounds)
+        {
+            // Larger guides need proportionally larger world-space tolerances to stay fair.
+            Vector2 guideSize = max - min;
+            guideSizeMultiplier = Mathf.Max(1f, Mathf.Max(guideSize.x, guideSize.y));
         }
     }
 

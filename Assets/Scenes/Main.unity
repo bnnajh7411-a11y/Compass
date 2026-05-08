@@ -239,11 +239,12 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1171336728}
+  - {fileID: 579788884}
   - {fileID: 2711336728}
   - {fileID: 1653438325}
   - {fileID: 1125692225}
   - {fileID: 1000432730}
+  - {fileID: 1171336728}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &519420028
@@ -383,6 +384,183 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &579788883
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 579788884}
+  - component: {fileID: 579788886}
+  - component: {fileID: 579788885}
+  m_Layer: 0
+  m_Name: Spline1
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &579788884
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 579788883}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children: []
+  m_Father: {fileID: 342505683}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!114 &579788885
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 579788883}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcdd522dc79681543b48d7fec2120744, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SplineGuide
+  splineContainer: {fileID: 579788886}
+  checkpointPrefab: {fileID: 0}
+  resolution: 20
+  center1WorldOffset: {x: 0, y: 0, z: 0}
+  center2WorldOffset: {x: 0, y: 0, z: 0}
+  center3WorldOffset: {x: 0, y: 0, z: 0}
+  checkpointRoot: {fileID: 0}
+  accuracyResolution: 120
+  checkpointHitTolerance: 0.04
+  coverageTolerance: 0.045
+  perfectTrailTolerance: 0.04
+  missTrailTolerance: 0.085
+--- !u!114 &579788886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 579788883}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dab5c7d4c32e743048dfca98e2d5914f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Splines::UnityEngine.Splines.SplineContainer
+  m_Spline:
+    m_EditModeType: 1
+    m_Knots: []
+    m_MetaData: []
+    m_Closed: 0
+    m_IntData:
+      m_Data: []
+    m_FloatData:
+      m_Data: []
+    m_Float4Data:
+      m_Data: []
+    m_ObjectData:
+      m_Data: []
+  m_Splines:
+  - m_EditModeType: 1
+    m_Knots:
+    - Position:
+        x: -0.5
+        y: 0
+        z: 0
+      TangentIn:
+        x: -0
+        y: -0
+        z: -0.27614236
+      TangentOut:
+        x: 0
+        y: 0
+        z: 0.27614236
+      Rotation:
+        value:
+          x: 0
+          y: 0
+          z: 0
+          w: 1
+    - Position:
+        x: 0
+        y: 0
+        z: 0.49999997
+      TangentIn:
+        x: -0
+        y: -0
+        z: -0.27614236
+      TangentOut:
+        x: 0
+        y: 0
+        z: 0.27614236
+      Rotation:
+        value:
+          x: 0
+          y: 0.70710677
+          z: 0
+          w: 0.70710677
+    - Position:
+        x: 0.5
+        y: 0
+        z: 0
+      TangentIn:
+        x: -0
+        y: -0
+        z: -0.27614236
+      TangentOut:
+        x: 0
+        y: 0
+        z: 0.27614236
+      Rotation:
+        value:
+          x: 0
+          y: 0.99999994
+          z: 0
+          w: 0
+    - Position:
+        x: 0
+        y: 0
+        z: -0.5
+      TangentIn:
+        x: -0
+        y: -0
+        z: -0.27614236
+      TangentOut:
+        x: 0
+        y: 0
+        z: 0.27614236
+      Rotation:
+        value:
+          x: 0
+          y: 0.7071067
+          z: 0
+          w: -0.7071067
+    m_MetaData:
+    - Mode: 4
+      Tension: 0.5
+    - Mode: 4
+      Tension: 0.5
+    - Mode: 4
+      Tension: 0.5
+    - Mode: 4
+      Tension: 0.5
+    m_Closed: 1
+    m_IntData:
+      m_Data: []
+    m_FloatData:
+      m_Data: []
+    m_Float4Data:
+      m_Data: []
+    m_ObjectData:
+      m_Data: []
+  m_Knots:
+    m_KnotsLink: []
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -1379,38 +1557,14 @@ GameObject:
   m_Component:
   - component: {fileID: 1171336728}
   - component: {fileID: 1171336727}
-  - component: {fileID: 1171336726}
+  - component: {fileID: 1171336729}
   m_Layer: 0
-  m_Name: Spline1
+  m_Name: Spline6
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1171336726
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1171336725}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dcdd522dc79681543b48d7fec2120744, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SplineGuide
-  splineContainer: {fileID: 1171336727}
-  checkpointPrefab: {fileID: 0}
-  resolution: 20
-  center1WorldOffset: {x: 0, y: 0, z: 0}
-  center2WorldOffset: {x: 0, y: 0, z: 0}
-  center3WorldOffset: {x: 0, y: 0, z: 0}
-  checkpointRoot: {fileID: 0}
-  accuracyResolution: 120
-  checkpointHitTolerance: 0.04
-  coverageTolerance: 0.045
-  perfectTrailTolerance: 0.04
-  missTrailTolerance: 0.085
 --- !u!114 &1171336727
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1529,6 +1683,98 @@ MonoBehaviour:
       m_Data: []
     m_ObjectData:
       m_Data: []
+  - m_EditModeType: 1
+    m_Knots:
+    - Position:
+        x: -1.5
+        y: 0
+        z: 0
+      TangentIn:
+        x: 0
+        y: 0
+        z: -0.55
+      TangentOut:
+        x: 0
+        y: 0
+        z: 0.55
+      Rotation:
+        value:
+          x: 0
+          y: 0
+          z: 0
+          w: 1
+    - Position:
+        x: -0.5
+        y: 0
+        z: 1
+      TangentIn:
+        x: 0
+        y: 0
+        z: -0.55
+      TangentOut:
+        x: 0
+        y: 0
+        z: 0.55
+      Rotation:
+        value:
+          x: 0
+          y: 0.70710677
+          z: 0
+          w: 0.7071067
+    - Position:
+        x: 0.5
+        y: 0
+        z: 0
+      TangentIn:
+        x: 0
+        y: 0
+        z: -0.55
+      TangentOut:
+        x: 0
+        y: 0
+        z: 0.55
+      Rotation:
+        value:
+          x: 0
+          y: 1
+          z: 0
+          w: -0.000000043711385
+    - Position:
+        x: -0.5
+        y: 0
+        z: -1
+      TangentIn:
+        x: 0
+        y: 0
+        z: -0.55
+      TangentOut:
+        x: 0
+        y: 0
+        z: 0.55
+      Rotation:
+        value:
+          x: 0
+          y: 0.70710677
+          z: 0
+          w: -0.7071067
+    m_MetaData:
+    - Mode: 2
+      Tension: 0.5
+    - Mode: 2
+      Tension: 0.5
+    - Mode: 2
+      Tension: 0.5
+    - Mode: 2
+      Tension: 0.5
+    m_Closed: 1
+    m_IntData:
+      m_Data: []
+    m_FloatData:
+      m_Data: []
+    m_Float4Data:
+      m_Data: []
+    m_ObjectData:
+      m_Data: []
   m_Knots:
     m_KnotsLink: []
 --- !u!4 &1171336728
@@ -1540,12 +1786,36 @@ Transform:
   m_GameObject: {fileID: 1171336725}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 1, y: 0, z: 0}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 342505683}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!114 &1171336729
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1171336725}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dcdd522dc79681543b48d7fec2120744, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SplineGuide
+  splineContainer: {fileID: 0}
+  checkpointPrefab: {fileID: 0}
+  resolution: 20
+  center1WorldOffset: {x: 0, y: 0, z: 0}
+  center2WorldOffset: {x: -1, y: 0, z: 0}
+  center3WorldOffset: {x: 0, y: 0, z: 0}
+  checkpointRoot: {fileID: 0}
+  accuracyResolution: 120
+  checkpointHitTolerance: 0.04
+  coverageTolerance: 0.045
+  perfectTrailTolerance: 0.04
+  missTrailTolerance: 0.085
 --- !u!1 &1305875991
 GameObject:
   m_ObjectHideFlags: 0
@@ -2117,6 +2387,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Rotate
   target1: {fileID: 894970329}
   target2: {fileID: 1450539215}
+  target3: {fileID: 102051338}
   orbitSpeed: 50
   fixedRadius: 3
 --- !u!1 &2711336725

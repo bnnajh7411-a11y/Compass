@@ -8,6 +8,7 @@ public class Rotate : MonoBehaviour
 
     public GameObject target1;
     public GameObject target2;
+    public GameObject target3;
     public float orbitSpeed = 50.0f;
     public float fixedRadius = 3.0f;
 
@@ -51,9 +52,21 @@ public class Rotate : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(KeyCode.A) || Input.GetKeyDown(KeyCode.D))
+        bool targetChanged = false;
+        if (Input.GetKeyDown(KeyCode.A))
         {
-            ToggleTarget();
+            StepTarget(-1);
+            targetChanged = true;
+        }
+
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            StepTarget(1);
+            targetChanged = true;
+        }
+
+        if (targetChanged)
+        {
             SetPositionByRadius(currentTarget);
         }
 
@@ -130,39 +143,115 @@ public class Rotate : MonoBehaviour
 
     private Transform GetInitialTarget()
     {
-        if (target1 != null)
+        Transform[] targets = GetAvailableTargets();
+        if (targets == null || targets.Length == 0)
         {
-            return target1.transform;
+            return null;
         }
 
-        if (target2 != null)
-        {
-            return target2.transform;
-        }
-
-        return null;
+        return targets[0];
     }
 
-    private void ToggleTarget()
+    private void StepTarget(int direction)
     {
-        if (target1 == null || target2 == null)
+        Transform[] targets = GetAvailableTargets();
+        if (targets == null || targets.Length == 0)
         {
             return;
         }
 
-        if (currentTarget == target1.transform)
+        if (direction == 0)
         {
-            currentTarget = target2.transform;
+            return;
         }
-        else
+
+        if (currentTarget == null)
         {
-            currentTarget = target1.transform;
+            currentTarget = direction > 0 ? targets[0] : targets[targets.Length - 1];
+            return;
         }
+
+        int currentIndex = GetTargetIndex(targets, currentTarget);
+        if (currentIndex < 0)
+        {
+            currentTarget = direction > 0 ? targets[0] : targets[targets.Length - 1];
+            return;
+        }
+
+        int nextIndex = (currentIndex + direction) % targets.Length;
+        if (nextIndex < 0)
+        {
+            nextIndex += targets.Length;
+        }
+
+        currentTarget = targets[nextIndex];
+    }
+
+    private Transform[] GetAvailableTargets()
+    {
+        int targetCount = 0;
+        if (target1 != null)
+        {
+            targetCount++;
+        }
+
+        if (target2 != null)
+        {
+            targetCount++;
+        }
+
+        if (target3 != null)
+        {
+            targetCount++;
+        }
+
+        if (targetCount == 0)
+        {
+            return null;
+        }
+
+        Transform[] targets = new Transform[targetCount];
+        int index = 0;
+
+        if (target1 != null)
+        {
+            targets[index++] = target1.transform;
+        }
+
+        if (target2 != null)
+        {
+            targets[index++] = target2.transform;
+        }
+
+        if (target3 != null)
+        {
+            targets[index++] = target3.transform;
+        }
+
+        return targets;
+    }
+
+    private static int GetTargetIndex(Transform[] targets, Transform target)
+    {
+        if (targets == null)
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < targets.Length; i++)
+        {
+            if (targets[i] == target)
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     public Transform CurrentTargetTransform => currentTarget;
 
-    public void ApplyTargetPositions(Vector3 target1Position, Vector3 target2Position)
+    public void ApplyTargetPositions(Vector3 target1Position, Vector3 target2Position, Vector3 target3Position)
     {
         if (target1 != null)
         {
@@ -176,6 +265,13 @@ public class Rotate : MonoBehaviour
             Vector3 position = target2Position;
             position.z = target2.transform.position.z;
             target2.transform.position = position;
+        }
+
+        if (target3 != null)
+        {
+            Vector3 position = target3Position;
+            position.z = target3.transform.position.z;
+            target3.transform.position = position;
         }
 
         if (currentTarget == null)

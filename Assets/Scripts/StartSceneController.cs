@@ -43,41 +43,13 @@ public class StartSceneController : MonoBehaviour
 
         RectTransform card = CreateCard(background.transform);
 
-        CreateText(
-            card,
-            "Title",
-            "COMPASS",
-            34,
-            FontStyle.Bold,
-            TextAnchor.UpperCenter,
-            new Color(0.95f, 0.97f, 1f, 1f),
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f),
-            new Vector2(0.5f, 1f),
-            new Vector2(680f, 44f),
-            new Vector2(0f, -20f));
-
-        CreateText(
-            card,
-            "Subtitle",
-            "Trace the guide and start the run",
-            24,
-            FontStyle.Normal,
-            TextAnchor.MiddleCenter,
-            new Color(0.84f, 0.88f, 0.94f, 1f),
-            new Vector2(0.5f, 0.5f),
-            new Vector2(0.5f, 0.5f),
-            new Vector2(0.5f, 0.5f),
-            new Vector2(680f, 72f),
-            new Vector2(0f, 26f));
-
         startButton = CreateStartButton(card);
 
         CreateText(
             card,
             "Hint",
             "Press Enter or click Start",
-            22,
+            30,
             FontStyle.Bold,
             TextAnchor.LowerCenter,
             new Color(0.62f, 0.94f, 0.76f, 1f),
@@ -142,7 +114,7 @@ public class StartSceneController : MonoBehaviour
 
     private RectTransform CreateCard(Transform parent)
     {
-        Image image = CreateImage(parent, "Card", new Color(0.10f, 0.12f, 0.17f, 0.96f));
+        Image image = CreateImage(parent, "Card", new Color(0.10f, 0.12f, 0.17f, 0));
         RectTransform rectTransform = image.rectTransform;
         rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
         rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
@@ -166,7 +138,7 @@ public class StartSceneController : MonoBehaviour
 
         ColorBlock colors = button.colors;
         colors.normalColor = new Color(0.18f, 0.68f, 0.42f, 1f);
-        colors.highlightedColor = new Color(0.24f, 0.79f, 0.50f, 1f);
+        colors.highlightedColor = new Color(0.34f, 0.89f, 0.60f, 1f);
         colors.pressedColor = new Color(0.14f, 0.54f, 0.34f, 1f);
         colors.selectedColor = colors.highlightedColor;
         colors.disabledColor = new Color(0.18f, 0.68f, 0.42f, 0.35f);
@@ -177,7 +149,7 @@ public class StartSceneController : MonoBehaviour
         rectTransform.anchorMin = new Vector2(0.5f, 0f);
         rectTransform.anchorMax = new Vector2(0.5f, 0f);
         rectTransform.pivot = new Vector2(0.5f, 0f);
-        rectTransform.sizeDelta = new Vector2(260f, 60f);
+        rectTransform.sizeDelta = new Vector2(520f, 120f);
         rectTransform.anchoredPosition = new Vector2(0f, 72f);
 
         GameObject labelObject = new GameObject("Label");
@@ -185,7 +157,7 @@ public class StartSceneController : MonoBehaviour
 
         Text label = labelObject.AddComponent<Text>();
         label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        label.fontSize = 26;
+        label.fontSize = 52;
         label.fontStyle = FontStyle.Bold;
         label.alignment = TextAnchor.MiddleCenter;
         label.color = Color.white;
@@ -226,6 +198,8 @@ public class StartSceneController : MonoBehaviour
         text.color = color;
         text.text = textValue;
         text.raycastTarget = false;
+        text.horizontalOverflow = HorizontalWrapMode.Overflow;
+        text.verticalOverflow = VerticalWrapMode.Overflow;
 
         RectTransform rectTransform = textObject.GetComponent<RectTransform>();
         rectTransform.anchorMin = anchorMin;

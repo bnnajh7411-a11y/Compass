@@ -118,7 +118,8 @@ public class ScoreManager : MonoBehaviour
 
         float coverageRatio = totalGuideSamples > 0 ? (float)coveredGuideSamples / totalGuideSamples : 0f;
         float checkpointProgress = CalculateCheckpointProgress();
-        float baseAccuracy = coverageRatio * currentTrailPrecision;
+        // Average coverage and precision so one metric does not crush the other.
+        float baseAccuracy = (coverageRatio + currentTrailPrecision) * 0.5f;
         currentAccuracy = Mathf.Clamp01(baseAccuracy + (checkpointProgress * CheckpointBonusWeight)) * 100f;
         Refresh();
     }
@@ -130,8 +131,7 @@ public class ScoreManager : MonoBehaviour
 
     public string GetProgressText()
     {
-        float trailPrecisionPercent = currentTrailPrecision * 100f;
-        return $"Accuracy {currentAccuracy:0}% ({coveredGuideSamples}/{totalGuideSamples}) | Line {trailPrecisionPercent:0}%";
+        return $"Accuracy {currentAccuracy:0}% ({coveredGuideSamples}/{totalGuideSamples})";
     }
 
     public void Refresh()
