@@ -1,20 +1,29 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class ResultSceneController : MonoBehaviour
 {
     private const string MainSceneName = "Main";
+    private const string MenuSceneName = "Menu";
     private const string DefaultMessage = "No submitted result yet.";
+    private static readonly Color CardColor = new Color32(0x0D, 0x11, 0x16, 0xF0);
+    private static readonly Vector2 ActionButtonSize = new Vector2(112f, 112f);
+    private const float IconButtonSpacing = 230.4f;
+
+    [SerializeField] private Sprite retryButtonSprite;
+    [SerializeField] private Sprite menuButtonSprite;
+    [SerializeField] private Sprite nextStageButtonSprite;
 
     private bool isTransitioning;
+    private Text stageText;
     private Text accuracyText;
     private Text detailText;
 
     private void Start()
     {
-        EnsureEventSystem();
+        RuntimeUiFactory.EnsureEventSystem();
         BuildUi();
         RefreshUi();
     }
@@ -28,19 +37,34 @@ public class ResultSceneController : MonoBehaviour
 
         if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
         {
-            LoadMainScene();
+            LoadPrimaryAction();
         }
     }
 
     private void BuildUi()
     {
-        Canvas canvas = CreateCanvas("ResultCanvas");
-        Image background = CreateImage(canvas.transform, "Background", new Color(0.05f, 0.06f, 0.09f, 1f));
-        Stretch(background.rectTransform);
+        Canvas canvas = RuntimeUiFactory.CreateCanvas(transform, "ResultCanvas");
+        Image background = RuntimeUiFactory.CreateImage(canvas.transform, "Background", RuntimeUiTheme.BackgroundColor);
+        RuntimeUiFactory.Stretch(background.rectTransform);
 
         RectTransform card = CreateCard(background.transform);
         CreateHeader(card);
-        accuracyText = CreateText(
+
+        stageText = RuntimeUiFactory.CreateText(
+            card,
+            "Stage",
+            "STAGE 1 COMPLETE",
+            26,
+            FontStyle.Bold,
+            TextAnchor.UpperCenter,
+            new Color(0.62f, 0.94f, 0.76f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(1f, 1f),
+            new Vector2(0.5f, 1f),
+            new Vector2(700f, 34f),
+            new Vector2(0f, -62f));
+
+        accuracyText = RuntimeUiFactory.CreateText(
             card,
             "Accuracy",
             "0%",
@@ -52,9 +76,9 @@ public class ResultSceneController : MonoBehaviour
             new Vector2(0.5f, 0.5f),
             new Vector2(0.5f, 0.5f),
             new Vector2(700f, 76f),
-            new Vector2(0f, 58f));
+            new Vector2(0f, 50f));
 
-        detailText = CreateText(
+        detailText = RuntimeUiFactory.CreateText(
             card,
             "Detail",
             DefaultMessage,
@@ -66,28 +90,56 @@ public class ResultSceneController : MonoBehaviour
             new Vector2(0.5f, 0.5f),
             new Vector2(0.5f, 0.5f),
             new Vector2(700f, 64f),
-            new Vector2(0f, -58f));
+            new Vector2(0f, -70f));
 
-        CreateText(
+        CreateActionButton(
             card,
-            "Hint",
-            "Press Enter or click Replay to draw again",
-            20,
-            FontStyle.Bold,
-            TextAnchor.LowerCenter,
-            new Color(0.62f, 0.94f, 0.76f, 1f),
-            new Vector2(0f, 0f),
-            new Vector2(1f, 0f),
-            new Vector2(0.5f, 0f),
-            new Vector2(700f, 34f),
-            new Vector2(0f, 16f));
+            "RetryButton",
+            retryButtonSprite,
+            ActionButtonSize,
+            new Vector2(-IconButtonSpacing, 56f),
+            LoadCurrentStageScene);
 
-        Button replayButton = CreateReplayButton(card);
-        replayButton.Select();
+        Button primaryButton;
+        if (CompassGameState.HasNextStage)
+        {
+            CreateActionButton(
+                card,
+                "MenuButton",
+                menuButtonSprite,
+                ActionButtonSize,
+                new Vector2(0f, 56f),
+                LoadMenuScene);
+
+            primaryButton = CreateActionButton(
+                card,
+                "PrimaryButton",
+                nextStageButtonSprite,
+                ActionButtonSize,
+                new Vector2(IconButtonSpacing, 56f),
+                LoadPrimaryAction);
+        }
+        else
+        {
+            primaryButton = CreateActionButton(
+                card,
+                "PrimaryButton",
+                menuButtonSprite,
+                ActionButtonSize,
+                new Vector2(0f, 56f),
+                LoadMenuScene);
+        }
+
+        primaryButton.Select();
     }
 
     private void RefreshUi()
     {
+        if (stageText != null)
+        {
+            stageText.text = $"{CompassGameState.GetCurrentStageLabel().ToUpperInvariant()} COMPLETE";
+        }
+
         if (accuracyText != null)
         {
             accuracyText.text = $"{CompassGameState.LastAccuracy:0}%";
@@ -99,7 +151,7 @@ public class ResultSceneController : MonoBehaviour
         }
     }
 
-    private void LoadMainScene()
+    private void LoadCurrentStageScene()
     {
         if (isTransitioning)
         {
@@ -110,111 +162,81 @@ public class ResultSceneController : MonoBehaviour
         SceneManager.LoadScene(MainSceneName);
     }
 
-    private void EnsureEventSystem()
+    private void LoadPrimaryAction()
     {
-        if (Object.FindFirstObjectByType<EventSystem>() != null)
+        if (isTransitioning)
         {
             return;
         }
 
-        GameObject eventSystemObject = new GameObject("EventSystem");
-        eventSystemObject.AddComponent<EventSystem>();
-        eventSystemObject.AddComponent<StandaloneInputModule>();
+        if (CompassGameState.HasNextStage)
+        {
+            isTransitioning = true;
+            CompassGameState.SelectStage(CompassGameState.GetNextStageIndex());
+            SceneManager.LoadScene(MainSceneName);
+            return;
+        }
+
+        isTransitioning = true;
+        SceneManager.LoadScene(MenuSceneName);
     }
 
-    private Canvas CreateCanvas(string canvasName)
+    private void LoadMenuScene()
     {
-        GameObject canvasObject = new GameObject(canvasName);
-        canvasObject.transform.SetParent(transform, false);
+        if (isTransitioning)
+        {
+            return;
+        }
 
-        Canvas canvas = canvasObject.AddComponent<Canvas>();
-        canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-        canvas.sortingOrder = 200;
-
-        CanvasScaler scaler = canvasObject.AddComponent<CanvasScaler>();
-        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-        scaler.referenceResolution = new Vector2(1920f, 1080f);
-        scaler.matchWidthOrHeight = 1f;
-
-        canvasObject.AddComponent<GraphicRaycaster>();
-        return canvas;
-    }
-
-    private Image CreateImage(Transform parent, string objectName, Color color)
-    {
-        GameObject imageObject = new GameObject(objectName);
-        imageObject.transform.SetParent(parent, false);
-
-        Image image = imageObject.AddComponent<Image>();
-        image.sprite = RuntimeSpriteFactory.GetWhiteSprite();
-        image.color = color;
-        return image;
+        isTransitioning = true;
+        SceneManager.LoadScene(MenuSceneName);
     }
 
     private RectTransform CreateCard(Transform parent)
     {
-        Image image = CreateImage(parent, "Card", new Color(0.10f, 0.12f, 0.17f, 0.96f));
+        Image image = RuntimeUiFactory.CreateImage(parent, "Card", CardColor);
         RectTransform rectTransform = image.rectTransform;
         rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
         rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        rectTransform.sizeDelta = new Vector2(760f, 440f);
+        rectTransform.sizeDelta = new Vector2(800f, 480f);
         rectTransform.anchoredPosition = Vector2.zero;
         return rectTransform;
     }
 
-    private Button CreateReplayButton(Transform parent)
+    private Button CreateActionButton(
+        Transform parent,
+        string objectName,
+        Sprite iconSprite,
+        Vector2 sizeDelta,
+        Vector2 anchoredPosition,
+        UnityAction onClick)
     {
-        GameObject buttonObject = new GameObject("ReplayButton");
+        GameObject buttonObject = new GameObject(objectName);
         buttonObject.transform.SetParent(parent, false);
 
         Image image = buttonObject.AddComponent<Image>();
-        image.sprite = RuntimeSpriteFactory.GetWhiteSprite();
-        image.color = new Color(0.18f, 0.48f, 0.93f, 1f);
+        image.sprite = iconSprite ?? RuntimeSpriteFactory.GetWhiteSprite();
+        image.color = RuntimeUiTheme.ButtonNormalColor;
+        image.preserveAspect = true;
 
         Button button = buttonObject.AddComponent<Button>();
-        button.transition = Selectable.Transition.ColorTint;
-
-        ColorBlock colors = button.colors;
-        colors.normalColor = new Color(0.18f, 0.48f, 0.93f, 1f);
-        colors.highlightedColor = new Color(0.26f, 0.58f, 1.0f, 1f);
-        colors.pressedColor = new Color(0.12f, 0.36f, 0.75f, 1f);
-        colors.selectedColor = colors.highlightedColor;
-        colors.disabledColor = new Color(0.18f, 0.48f, 0.93f, 0.35f);
-        button.colors = colors;
-        button.onClick.AddListener(LoadMainScene);
+        RuntimeUiFactory.ApplyThemeButton(button, image);
+        button.onClick.AddListener(onClick);
 
         RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
         rectTransform.anchorMin = new Vector2(0.5f, 0f);
         rectTransform.anchorMax = new Vector2(0.5f, 0f);
         rectTransform.pivot = new Vector2(0.5f, 0f);
-        rectTransform.sizeDelta = new Vector2(240f, 56f);
-        rectTransform.anchoredPosition = new Vector2(0f, 60f);
-
-        GameObject labelObject = new GameObject("Label");
-        labelObject.transform.SetParent(buttonObject.transform, false);
-
-        Text label = labelObject.AddComponent<Text>();
-        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        label.fontSize = 24;
-        label.fontStyle = FontStyle.Bold;
-        label.alignment = TextAnchor.MiddleCenter;
-        label.color = Color.white;
-        label.text = "REPLAY";
-        label.raycastTarget = false;
-
-        RectTransform labelRect = labelObject.GetComponent<RectTransform>();
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = Vector2.zero;
-        labelRect.offsetMax = Vector2.zero;
+        rectTransform.sizeDelta = sizeDelta;
+        rectTransform.anchoredPosition = anchoredPosition;
 
         return button;
     }
 
     private void CreateHeader(Transform parent)
     {
-        CreateText(
+        RuntimeUiFactory.CreateText(
             parent,
             "Title",
             "RESULT",
@@ -227,51 +249,5 @@ public class ResultSceneController : MonoBehaviour
             new Vector2(0.5f, 1f),
             new Vector2(680f, 44f),
             new Vector2(0f, -20f));
-    }
-
-    private Text CreateText(
-        Transform parent,
-        string objectName,
-        string textValue,
-        int fontSize,
-        FontStyle fontStyle,
-        TextAnchor alignment,
-        Color color,
-        Vector2 anchorMin,
-        Vector2 anchorMax,
-        Vector2 pivot,
-        Vector2 sizeDelta,
-        Vector2 anchoredPosition)
-    {
-        GameObject textObject = new GameObject(objectName);
-        textObject.transform.SetParent(parent, false);
-
-        Text text = textObject.AddComponent<Text>();
-        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        text.fontSize = fontSize;
-        text.fontStyle = fontStyle;
-        text.alignment = alignment;
-        text.color = color;
-        text.text = textValue;
-        text.raycastTarget = false;
-        text.horizontalOverflow = HorizontalWrapMode.Overflow;
-        text.verticalOverflow = VerticalWrapMode.Overflow;
-
-        RectTransform rectTransform = textObject.GetComponent<RectTransform>();
-        rectTransform.anchorMin = anchorMin;
-        rectTransform.anchorMax = anchorMax;
-        rectTransform.pivot = pivot;
-        rectTransform.sizeDelta = sizeDelta;
-        rectTransform.anchoredPosition = anchoredPosition;
-
-        return text;
-    }
-
-    private static void Stretch(RectTransform rectTransform)
-    {
-        rectTransform.anchorMin = Vector2.zero;
-        rectTransform.anchorMax = Vector2.one;
-        rectTransform.offsetMin = Vector2.zero;
-        rectTransform.offsetMax = Vector2.zero;
     }
 }

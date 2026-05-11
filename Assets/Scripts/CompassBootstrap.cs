@@ -75,7 +75,7 @@ public class CompassBootstrap : MonoBehaviour
             mainCamera.cullingMask &= ~(1 << previewLayer);
         }
 
-        SplineGuide guide = SelectRandomGuide(out SplineContainer splineContainer);
+        SplineGuide guide = SelectStageGuide(CompassGameState.SelectedStageIndex, out SplineContainer splineContainer);
         if (guide == null || splineContainer == null)
         {
             Debug.LogWarning("CompassBootstrap: No usable SplineGuide or SplineContainer was found.");
@@ -135,15 +135,16 @@ public class CompassBootstrap : MonoBehaviour
         scoreManager.Refresh();
     }
 
-    private SplineGuide SelectRandomGuide(out SplineContainer splineContainer)
+    private SplineGuide SelectStageGuide(int stageIndex, out SplineContainer splineContainer)
     {
         splineContainer = null;
 
         SplineGuide[] guides = Object.FindObjectsByType<SplineGuide>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         if (guides != null && guides.Length > 0)
         {
-            int selectedIndex = Random.Range(0, guides.Length);
+            string targetGuideName = CompassGameState.GetStageGuideName(stageIndex);
             SplineGuide selectedGuide = null;
+            SplineGuide firstAvailableGuide = null;
 
             for (int i = 0; i < guides.Length; i++)
             {
@@ -153,26 +154,46 @@ public class CompassBootstrap : MonoBehaviour
                     continue;
                 }
 
-                bool isSelected = i == selectedIndex;
-                guide.enabled = isSelected;
-                guide.gameObject.SetActive(isSelected);
+                if (firstAvailableGuide == null)
+                {
+                    firstAvailableGuide = guide;
+                }
 
-                if (isSelected)
+                if (string.Equals(guide.gameObject.name, targetGuideName, System.StringComparison.OrdinalIgnoreCase))
                 {
                     selectedGuide = guide;
                 }
             }
 
+            if (selectedGuide == null)
+            {
+                selectedGuide = firstAvailableGuide;
+                if (selectedGuide != null)
+                {
+                    Debug.LogWarning($"CompassBootstrap: Stage guide '{targetGuideName}' was not found. Falling back to '{selectedGuide.name}'.");
+                }
+            }
+
             if (selectedGuide != null)
             {
+                for (int i = 0; i < guides.Length; i++)
+                {
+                    SplineGuide guide = guides[i];
+                    if (guide == null)
+                    {
+                        continue;
+                    }
+
+                    bool isSelected = guide == selectedGuide;
+                    guide.enabled = isSelected;
+                    guide.gameObject.SetActive(isSelected);
+                }
+
                 splineContainer = ResolveSplineContainer(selectedGuide);
                 if (splineContainer != null)
                 {
                     selectedGuide.splineContainer = splineContainer;
-                    if (guides.Length > 1)
-                    {
-                        Debug.Log($"CompassBootstrap: Selected guide '{selectedGuide.name}' from {guides.Length} candidates.");
-                    }
+                    Debug.Log($"CompassBootstrap: Selected guide '{selectedGuide.name}' for stage {CompassGameState.GetCurrentStageLabel()}.");
 
                     return selectedGuide;
                 }
