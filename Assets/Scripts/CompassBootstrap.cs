@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.Splines;
 using UnityEngine.UI;
@@ -124,6 +125,7 @@ public class CompassBootstrap : MonoBehaviour
             CreateGridBackdrop("[CompassGrid]", gridBounds, mainCamera.gameObject.layer);
             CreateGridBackdrop("[CompassPreviewGrid]", gridBounds, previewLayer);
             CreatePreviewCamera(previewLayer, bounds);
+            RuntimeUiFactory.EnsureEventSystem();
             CreatePreviewPanel();
         }
         else
@@ -278,6 +280,7 @@ public class CompassBootstrap : MonoBehaviour
 
         Image background = panelObject.AddComponent<Image>();
         background.color = new Color(0.05f, 0.05f, 0.07f, 0.88f);
+        background.raycastTarget = false;
 
         RectTransform panelRect = panelObject.GetComponent<RectTransform>();
         panelRect.anchorMin = new Vector2(1f, 1f);
@@ -295,6 +298,7 @@ public class CompassBootstrap : MonoBehaviour
         title.fontStyle = FontStyle.Bold;
         title.alignment = TextAnchor.UpperLeft;
         title.color = Color.white;
+        title.raycastTarget = false;
         title.text = "<보기>";
 
         RectTransform titleRect = titleObject.GetComponent<RectTransform>();
@@ -310,6 +314,7 @@ public class CompassBootstrap : MonoBehaviour
         RawImage rawImage = previewObject.AddComponent<RawImage>();
         rawImage.texture = previewTexture;
         rawImage.color = Color.white;
+        rawImage.raycastTarget = false;
 
         RectTransform previewRect = previewObject.GetComponent<RectTransform>();
         previewRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -317,6 +322,68 @@ public class CompassBootstrap : MonoBehaviour
         previewRect.pivot = new Vector2(0.5f, 0.5f);
         previewRect.sizeDelta = new Vector2(256f, 256f);
         previewRect.anchoredPosition = new Vector2(0f, -4f);
+
+        GameObject overlayObject = new GameObject("InteractionOverlay");
+        overlayObject.transform.SetParent(panelObject.transform, false);
+
+        Image overlay = overlayObject.AddComponent<Image>();
+        overlay.sprite = RuntimeSpriteFactory.GetWhiteSprite();
+        overlay.color = new Color(1f, 1f, 1f, 0f);
+        overlay.raycastTarget = true;
+
+        RectTransform overlayRect = overlayObject.GetComponent<RectTransform>();
+        RuntimeUiFactory.Stretch(overlayRect);
+        overlayObject.transform.SetAsLastSibling();
+
+        CompassPreviewInteractor interactor = overlayObject.AddComponent<CompassPreviewInteractor>();
+        interactor.Configure(panelRect, previewRect, previewCamera);
+
+        CreatePreviewZoomButton(panelObject.transform, "ZoomOutButton", "-", new Vector2(28f, 28f), interactor.ZoomOut);
+        CreatePreviewZoomButton(panelObject.transform, "ZoomInButton", "+", new Vector2(72f, 28f), interactor.ZoomIn);
+    }
+
+    private Button CreatePreviewZoomButton(Transform parent, string objectName, string labelText, Vector2 anchoredPosition, UnityAction onClick)
+    {
+        GameObject buttonObject = new GameObject(objectName);
+        buttonObject.transform.SetParent(parent, false);
+
+        Image image = buttonObject.AddComponent<Image>();
+        image.sprite = RuntimeSpriteFactory.GetCircleSprite();
+        image.color = RuntimeUiTheme.ButtonNormalColor;
+        image.preserveAspect = true;
+
+        Button button = buttonObject.AddComponent<Button>();
+        RuntimeUiFactory.ApplyThemeButton(button, image);
+        button.onClick.AddListener(onClick);
+
+        RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(0f, 0f);
+        rectTransform.anchorMax = new Vector2(0f, 0f);
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        rectTransform.sizeDelta = new Vector2(36f, 36f);
+        rectTransform.anchoredPosition = anchoredPosition;
+
+        Text label = RuntimeUiFactory.CreateText(
+            buttonObject.transform,
+            "Label",
+            labelText,
+            24,
+            FontStyle.Bold,
+            TextAnchor.MiddleCenter,
+            RuntimeUiTheme.ButtonLabelColor,
+            Vector2.zero,
+            Vector2.one,
+            new Vector2(0.5f, 0.5f),
+            Vector2.zero,
+            Vector2.zero);
+
+        RectTransform labelRect = label.rectTransform;
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = Vector2.zero;
+        labelRect.offsetMax = Vector2.zero;
+
+        return button;
     }
 
     private GameObject GetOrCreateCanvas()
