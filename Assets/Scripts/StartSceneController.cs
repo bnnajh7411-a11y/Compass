@@ -9,7 +9,8 @@ public class StartSceneController : MonoBehaviour
     private const string MenuSceneName = "Menu";
     private static readonly Vector2 TitleSize = new Vector2(480f, 300f);
     private static readonly Vector2 TitlePosition = new Vector2(0f, 330f);
-    private const float TitleFadeDuration = 1.0f;
+    private const float TitleFadeDuration = 3.0f;
+    private const float TitleStartScale = 0.75f;
 
     [SerializeField] private Sprite titleSprite;
     [SerializeField] private Sprite startButtonSprite;
@@ -104,6 +105,7 @@ public class StartSceneController : MonoBehaviour
         rectTransform.pivot = new Vector2(0.5f, 0.5f);
         rectTransform.sizeDelta = TitleSize;
         rectTransform.anchoredPosition = TitlePosition;
+        rectTransform.localScale = Vector3.one * TitleStartScale;
         return rectTransform;
     }
 
@@ -150,6 +152,7 @@ public class StartSceneController : MonoBehaviour
             yield break;
         }
 
+        Vector3 finalScale = Vector3.one;
         float elapsed = 0f;
 
         while (elapsed < TitleFadeDuration)
@@ -157,11 +160,16 @@ public class StartSceneController : MonoBehaviour
             elapsed += Time.unscaledDeltaTime;
             float t = Mathf.Clamp01(elapsed / TitleFadeDuration);
             float easedT = Mathf.SmoothStep(0f, 1f, t);
+
+            title.localScale = Vector3.one * Mathf.Lerp(TitleStartScale, 1f, easedT);
+
             Color color = titleImage.color;
             color.a = easedT;
             titleImage.color = color;
             yield return null;
         }
+
+        title.localScale = finalScale;
 
         Color finalColor = titleImage.color;
         finalColor.a = 1f;

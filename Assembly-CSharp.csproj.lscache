@@ -51,14 +51,19 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 
 [sourceFiles]
 Assets/Scripts/
+ BGMManager.cs
  Checkpoint.cs
  CompassBootstrap.cs
  CompassGameState.cs
+ CompassPreviewInteractor.cs
  ConnectedLine.cs
  GridBackdropRenderer.cs
+ MenuSceneController.cs
  ResultSceneController.cs
  Rotate.cs
  RuntimeSpriteFactory.cs
+ RuntimeUiFactory.cs
+ RuntimeUiTheme.cs
  ScoreManager.cs
  ShapePreviewRenderer.cs
  SplineGuide.cs
