@@ -163,6 +163,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19e60b67867a4140aaf9cc12fbf992c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StartSceneController
+  titleSprite: {fileID: -1167117357, guid: e93df98be2a8d314e9fc35f89eadcb89, type: 3}
+  startButtonSprite: {fileID: 6934086728263231946, guid: 54a1a24f1422b9b4ba465b846b1d365b, type: 3}
 --- !u!1 &427791029
 GameObject:
   m_ObjectHideFlags: 0

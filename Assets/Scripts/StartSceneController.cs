@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -7,6 +8,17 @@ using UnityEngine.UI;
 public class StartSceneController : MonoBehaviour
 {
     private const string MainSceneName = "Main";
+    private static readonly Color BackgroundColor = new Color32(0x9F, 0xF2, 0xEE, 0xFF);
+    private static readonly Color StartButtonColor = new Color32(0xFF, 0xFF, 0xFF, 0xFF);
+    private static readonly Color StartButtonHoverColor = new Color32(0xE0, 0xE0, 0xE0, 0xFF);
+    private static readonly Color StartButtonPressedColor = new Color32(0xC0, 0xC0, 0xC0, 0xFF);
+    private static readonly Color StartButtonDisabledColor = new Color32(0xD8, 0xD8, 0xD8, 0xFF);
+    private static readonly Vector2 TitleSize = new Vector2(480f, 300f);
+    private static readonly Vector2 TitlePosition = new Vector2(0f, 330f);
+    private const float TitleFadeDuration = 1.0f;
+
+    [SerializeField] private Sprite titleSprite;
+    [SerializeField] private Sprite startButtonSprite;
 
     private bool isTransitioning;
     private Button startButton;
@@ -38,26 +50,17 @@ public class StartSceneController : MonoBehaviour
     private void BuildUi()
     {
         Canvas canvas = CreateCanvas("StartCanvas");
-        Image background = CreateImage(canvas.transform, "Background", new Color(0.05f, 0.06f, 0.09f, 1f));
+        Image background = CreateImage(canvas.transform, "Background", BackgroundColor);
         Stretch(background.rectTransform);
 
         RectTransform card = CreateCard(background.transform);
-
+        RectTransform title = CreateTitleImage(background.transform);
         startButton = CreateStartButton(card);
 
-        CreateText(
-            card,
-            "Hint",
-            "Press Enter or click Start",
-            30,
-            FontStyle.Bold,
-            TextAnchor.LowerCenter,
-            new Color(0.62f, 0.94f, 0.76f, 1f),
-            new Vector2(0f, 0f),
-            new Vector2(1f, 0f),
-            new Vector2(0.5f, 0f),
-            new Vector2(680f, 34f),
-            new Vector2(0f, 18f));
+        if (title != null)
+        {
+            StartCoroutine(AnimateTitleFadeIn(title));
+        }
     }
 
     private void LoadMainScene()
@@ -124,24 +127,57 @@ public class StartSceneController : MonoBehaviour
         return rectTransform;
     }
 
+    private RectTransform CreateTitleImage(Transform parent)
+    {
+        if (titleSprite == null)
+        {
+            Debug.LogWarning("StartSceneController: Title sprite is not assigned.");
+            return null;
+        }
+
+        GameObject titleObject = new GameObject("Title");
+        titleObject.transform.SetParent(parent, false);
+
+        Image image = titleObject.AddComponent<Image>();
+        image.sprite = titleSprite;
+        image.color = new Color(1f, 1f, 1f, 0f);
+        image.preserveAspect = true;
+        image.raycastTarget = false;
+
+        RectTransform rectTransform = image.rectTransform;
+        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        rectTransform.sizeDelta = TitleSize;
+        rectTransform.anchoredPosition = TitlePosition;
+        return rectTransform;
+    }
+
     private Button CreateStartButton(Transform parent)
     {
+        if (startButtonSprite == null)
+        {
+            Debug.LogWarning("StartSceneController: Start button sprite is not assigned.");
+            return null;
+        }
+
         GameObject buttonObject = new GameObject("StartButton");
         buttonObject.transform.SetParent(parent, false);
 
         Image image = buttonObject.AddComponent<Image>();
-        image.sprite = RuntimeSpriteFactory.GetWhiteSprite();
-        image.color = new Color(0.18f, 0.68f, 0.42f, 1f);
+        image.sprite = startButtonSprite;
+        image.color = StartButtonColor;
+        image.preserveAspect = true;
 
         Button button = buttonObject.AddComponent<Button>();
         button.transition = Selectable.Transition.ColorTint;
 
         ColorBlock colors = button.colors;
-        colors.normalColor = new Color(0.18f, 0.68f, 0.42f, 1f);
-        colors.highlightedColor = new Color(0.34f, 0.89f, 0.60f, 1f);
-        colors.pressedColor = new Color(0.14f, 0.54f, 0.34f, 1f);
-        colors.selectedColor = colors.highlightedColor;
-        colors.disabledColor = new Color(0.18f, 0.68f, 0.42f, 0.35f);
+        colors.normalColor = StartButtonColor;
+        colors.highlightedColor = StartButtonHoverColor;
+        colors.pressedColor = StartButtonPressedColor;
+        colors.selectedColor = StartButtonHoverColor;
+        colors.disabledColor = StartButtonDisabledColor;
         button.colors = colors;
         button.onClick.AddListener(LoadMainScene);
 
@@ -149,28 +185,41 @@ public class StartSceneController : MonoBehaviour
         rectTransform.anchorMin = new Vector2(0.5f, 0f);
         rectTransform.anchorMax = new Vector2(0.5f, 0f);
         rectTransform.pivot = new Vector2(0.5f, 0f);
-        rectTransform.sizeDelta = new Vector2(520f, 120f);
-        rectTransform.anchoredPosition = new Vector2(0f, 72f);
-
-        GameObject labelObject = new GameObject("Label");
-        labelObject.transform.SetParent(buttonObject.transform, false);
-
-        Text label = labelObject.AddComponent<Text>();
-        label.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        label.fontSize = 52;
-        label.fontStyle = FontStyle.Bold;
-        label.alignment = TextAnchor.MiddleCenter;
-        label.color = Color.white;
-        label.text = "START";
-        label.raycastTarget = false;
-
-        RectTransform labelRect = labelObject.GetComponent<RectTransform>();
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = Vector2.zero;
-        labelRect.offsetMax = Vector2.zero;
+        rectTransform.sizeDelta = new Vector2(200f, 200f);
+        rectTransform.anchoredPosition = new Vector2(0f, 60f);
 
         return button;
+    }
+
+    private IEnumerator AnimateTitleFadeIn(RectTransform title)
+    {
+        if (title == null)
+        {
+            yield break;
+        }
+
+        Image titleImage = title.GetComponent<Image>();
+        if (titleImage == null)
+        {
+            yield break;
+        }
+
+        float elapsed = 0f;
+
+        while (elapsed < TitleFadeDuration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = Mathf.Clamp01(elapsed / TitleFadeDuration);
+            float easedT = Mathf.SmoothStep(0f, 1f, t);
+            Color color = titleImage.color;
+            color.a = easedT;
+            titleImage.color = color;
+            yield return null;
+        }
+
+        Color finalColor = titleImage.color;
+        finalColor.a = 1f;
+        titleImage.color = finalColor;
     }
 
     private Text CreateText(
