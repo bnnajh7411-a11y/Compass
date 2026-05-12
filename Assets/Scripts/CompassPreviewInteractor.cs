@@ -1,4 +1,3 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -10,13 +9,10 @@ public class CompassPreviewInteractor : MonoBehaviour,
     IDragHandler,
     IEndDragHandler
 {
-    private const float DoubleClickDelay = 0.25f;
-    private const float PanelExpandScale = 2.4f;
-    private const float PreviewExpandScale = 2.2f;
     private const float ResizeLerpSpeed = 14f;
     private const float ScrollZoomStep = 0.18f;
-    private const float ButtonZoomInFactor = 0.65f;
-    private const float ButtonZoomOutFactor = 1.35f;
+    private const float DefaultPreviewAreaScale = 1f;
+    private const float ExpandedPreviewAreaScale = 2.2f;
     private const float MinZoomFactor = 0.2f;
     private const float MaxZoomFactor = 3.0f;
 
@@ -26,23 +22,28 @@ public class CompassPreviewInteractor : MonoBehaviour,
 
     private Vector2 compactPanelSize;
     private Vector2 compactPreviewSize;
-    private Vector2 expandedPanelSize;
-    private Vector2 expandedPreviewSize;
 
     private Vector3 baseCameraPosition;
     private Quaternion baseCameraRotation;
     private float baseOrthographicSize;
     private float minOrthographicSize;
     private float maxOrthographicSize;
+    private float targetPreviewAreaScale = DefaultPreviewAreaScale;
 
-    private bool isExpanded;
     private bool isDragging;
-    private bool pendingSingleClick;
-    private float lastClickTime;
     private Vector2 dragStartLocalPoint;
     private Vector3 dragStartCameraPosition;
     private float dragStartOrthographicSize;
-    private Coroutine singleClickRoutine;
+
+    public event System.Action<bool> PreviewAreaExpandedChanged;
+
+    public bool IsExpanded
+    {
+        get
+        {
+            return Mathf.Abs(targetPreviewAreaScale - ExpandedPreviewAreaScale) < 0.01f;
+        }
+    }
 
     public void Configure(RectTransform panelRect, RectTransform previewRect, Camera previewCamera)
     {
@@ -52,11 +53,10 @@ public class CompassPreviewInteractor : MonoBehaviour,
 
         compactPanelSize = panelRect != null ? panelRect.sizeDelta : new Vector2(300f, 360f);
         compactPreviewSize = previewRect != null ? previewRect.sizeDelta : new Vector2(256f, 256f);
-        expandedPanelSize = compactPanelSize * PanelExpandScale;
-        expandedPreviewSize = compactPreviewSize * PreviewExpandScale;
+        targetPreviewAreaScale = DefaultPreviewAreaScale;
 
         CacheCameraState();
-        SetExpanded(false, true);
+        ApplyPreviewAreaScale(targetPreviewAreaScale, true);
     }
 
     private void Update()
@@ -66,8 +66,8 @@ public class CompassPreviewInteractor : MonoBehaviour,
             return;
         }
 
-        Vector2 targetPanelSize = isExpanded ? expandedPanelSize : compactPanelSize;
-        Vector2 targetPreviewSize = isExpanded ? expandedPreviewSize : compactPreviewSize;
+        Vector2 targetPanelSize = compactPanelSize * targetPreviewAreaScale;
+        Vector2 targetPreviewSize = compactPreviewSize * targetPreviewAreaScale;
         float t = 1f - Mathf.Exp(-ResizeLerpSpeed * Time.unscaledDeltaTime);
 
         panelRect.sizeDelta = Vector2.Lerp(panelRect.sizeDelta, targetPanelSize, t);
@@ -86,23 +86,12 @@ public class CompassPreviewInteractor : MonoBehaviour,
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        if (!IsOverPreview(eventData))
+        if (!IsOverPreview(eventData) || eventData.clickCount < 2)
         {
             return;
         }
 
-        bool looksLikeDoubleClick = eventData.clickCount >= 2
-            || (pendingSingleClick && (Time.unscaledTime - lastClickTime) <= DoubleClickDelay);
-
-        lastClickTime = Time.unscaledTime;
-
-        if (looksLikeDoubleClick)
-        {
-            ResetView();
-            return;
-        }
-
-        QueueSingleClickToggle();
+        ResetView();
     }
 
     public void OnScroll(PointerEventData eventData)
@@ -121,14 +110,14 @@ public class CompassPreviewInteractor : MonoBehaviour,
         ApplyZoom(1f - (scroll * ScrollZoomStep), eventData);
     }
 
-    public void ZoomIn()
+    public void ExpandPreviewArea()
     {
-        ApplyZoom(ButtonZoomInFactor, null);
+        ApplyPreviewAreaScale(ExpandedPreviewAreaScale, false);
     }
 
-    public void ZoomOut()
+    public void CollapsePreviewArea()
     {
-        ApplyZoom(ButtonZoomOutFactor, null);
+        ApplyPreviewAreaScale(DefaultPreviewAreaScale, false);
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -137,8 +126,6 @@ public class CompassPreviewInteractor : MonoBehaviour,
         {
             return;
         }
-
-        CancelPendingSingleClick();
 
         if (!TryGetLocalPoint(eventData, out dragStartLocalPoint))
         {
@@ -179,69 +166,47 @@ public class CompassPreviewInteractor : MonoBehaviour,
         isDragging = false;
     }
 
-    private void QueueSingleClickToggle()
-    {
-        CancelPendingSingleClick();
-        pendingSingleClick = true;
-        singleClickRoutine = StartCoroutine(ResolveSingleClick());
-    }
-
-    private IEnumerator ResolveSingleClick()
-    {
-        float startTime = Time.unscaledTime;
-        while (Time.unscaledTime - startTime < DoubleClickDelay)
-        {
-            if (!pendingSingleClick)
-            {
-                singleClickRoutine = null;
-                yield break;
-            }
-
-            yield return null;
-        }
-
-        singleClickRoutine = null;
-        if (!pendingSingleClick)
-        {
-            yield break;
-        }
-
-        pendingSingleClick = false;
-        ToggleExpandedState();
-    }
-
-    private void ToggleExpandedState()
-    {
-        isExpanded = !isExpanded;
-    }
-
     private void ResetView()
     {
-        CancelPendingSingleClick();
         isDragging = false;
-        isExpanded = false;
+        CollapsePreviewArea();
 
         ResetCameraState();
     }
 
-    private void SetExpanded(bool expanded, bool immediate)
+    private void ApplyPreviewAreaScale(float scale, bool immediate)
     {
-        isExpanded = expanded;
+        bool wasExpanded = IsExpanded;
+        targetPreviewAreaScale = Mathf.Clamp(scale, DefaultPreviewAreaScale, ExpandedPreviewAreaScale);
 
         if (!immediate)
         {
+            NotifyPreviewAreaStateChanged(wasExpanded);
             return;
         }
 
         if (panelRect != null)
         {
-            panelRect.sizeDelta = expanded ? expandedPanelSize : compactPanelSize;
+            panelRect.sizeDelta = compactPanelSize * targetPreviewAreaScale;
         }
 
         if (previewRect != null)
         {
-            previewRect.sizeDelta = expanded ? expandedPreviewSize : compactPreviewSize;
+            previewRect.sizeDelta = compactPreviewSize * targetPreviewAreaScale;
         }
+
+        NotifyPreviewAreaStateChanged(wasExpanded);
+    }
+
+    private void NotifyPreviewAreaStateChanged(bool wasExpanded)
+    {
+        bool isExpanded = IsExpanded;
+        if (wasExpanded == isExpanded)
+        {
+            return;
+        }
+
+        PreviewAreaExpandedChanged?.Invoke(isExpanded);
     }
 
     private void CacheCameraState()
@@ -314,25 +279,12 @@ public class CompassPreviewInteractor : MonoBehaviour,
         return compactPreviewSize;
     }
 
-    private void CancelPendingSingleClick()
-    {
-        pendingSingleClick = false;
-
-        if (singleClickRoutine != null)
-        {
-            StopCoroutine(singleClickRoutine);
-            singleClickRoutine = null;
-        }
-    }
-
     private void ApplyZoom(float zoomFactor, PointerEventData eventData)
     {
         if (previewCamera == null || previewRect == null)
         {
             return;
         }
-
-        CancelPendingSingleClick();
 
         float oldSize = previewCamera.orthographicSize;
         float newSize = Mathf.Clamp(oldSize * zoomFactor, minOrthographicSize, maxOrthographicSize);

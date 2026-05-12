@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.Splines;
 using UnityEngine.UI;
@@ -59,6 +58,7 @@ public class CompassBootstrap : MonoBehaviour
     {
         CleanupRuntime();
         RuntimeUiFactory.EnsureEventSystem();
+        RuntimeUiFactory.EnableEventSystemNavigation();
 
         Camera mainCamera = Camera.main;
         if (mainCamera == null)
@@ -280,6 +280,7 @@ public class CompassBootstrap : MonoBehaviour
         panelObject.transform.SetParent(GetOrCreateCanvas().transform, false);
 
         Image background = panelObject.AddComponent<Image>();
+        background.sprite = RuntimeSpriteFactory.GetRoundedRectSprite(300, 360, 36f);
         background.color = new Color32(0xE7, 0xF3, 0xF1, 0xC5);
         background.raycastTarget = false;
 
@@ -297,7 +298,7 @@ public class CompassBootstrap : MonoBehaviour
         title.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         title.fontSize = 24;
         title.fontStyle = FontStyle.Bold;
-        title.alignment = TextAnchor.UpperLeft;
+        title.alignment = TextAnchor.UpperCenter;
         title.color = Color.white;
         title.raycastTarget = false;
         title.text = "<보기>";
@@ -339,11 +340,43 @@ public class CompassBootstrap : MonoBehaviour
         CompassPreviewInteractor interactor = overlayObject.AddComponent<CompassPreviewInteractor>();
         interactor.Configure(panelRect, previewRect, previewCamera);
 
-        CreatePreviewZoomButton(panelObject.transform, "ZoomOutButton", "-", new Vector2(28f, 28f), interactor.ZoomOut);
-        CreatePreviewZoomButton(panelObject.transform, "ZoomInButton", "+", new Vector2(72f, 28f), interactor.ZoomIn);
+        CreatePreviewScaleButtons(panelObject.transform, interactor, new Vector2(50f, 28f));
     }
 
-    private Button CreatePreviewZoomButton(Transform parent, string objectName, string labelText, Vector2 anchoredPosition, UnityAction onClick)
+    private void CreatePreviewScaleButtons(Transform parent, CompassPreviewInteractor interactor, Vector2 anchoredPosition)
+    {
+        Button expandButton = CreatePreviewScaleButton(
+            parent,
+            "PreviewScaleExpandButton",
+            "+",
+            anchoredPosition,
+            interactor.ExpandPreviewArea);
+
+        Button collapseButton = CreatePreviewScaleButton(
+            parent,
+            "PreviewScaleCollapseButton",
+            "-",
+            anchoredPosition,
+            interactor.CollapsePreviewArea);
+
+        System.Action<bool> refreshButtons = isExpanded =>
+        {
+            if (expandButton != null)
+            {
+                expandButton.gameObject.SetActive(!isExpanded);
+            }
+
+            if (collapseButton != null)
+            {
+                collapseButton.gameObject.SetActive(isExpanded);
+            }
+        };
+
+        interactor.PreviewAreaExpandedChanged += refreshButtons;
+        refreshButtons(interactor.IsExpanded);
+    }
+
+    private Button CreatePreviewScaleButton(Transform parent, string objectName, string labelText, Vector2 anchoredPosition, System.Action onClick)
     {
         GameObject buttonObject = new GameObject(objectName);
         buttonObject.transform.SetParent(parent, false);
@@ -355,7 +388,7 @@ public class CompassBootstrap : MonoBehaviour
 
         Button button = buttonObject.AddComponent<Button>();
         RuntimeUiFactory.ApplyThemeButton(button, image);
-        button.onClick.AddListener(onClick);
+        button.onClick.AddListener(() => onClick?.Invoke());
 
         RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
         rectTransform.anchorMin = new Vector2(0f, 0f);

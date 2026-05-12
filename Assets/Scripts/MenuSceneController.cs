@@ -14,26 +14,12 @@ public class MenuSceneController : MonoBehaviour
     private const float StageGridTopY = 332.8f;
 
     private bool isTransitioning;
-    private Button[] stageButtons = System.Array.Empty<Button>();
 
     private void Start()
     {
         RuntimeUiFactory.EnsureEventSystem();
+        RuntimeUiFactory.DisableEventSystemNavigation();
         BuildUi();
-        SelectCurrentStageButton();
-    }
-
-    private void Update()
-    {
-        if (isTransitioning)
-        {
-            return;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
-        {
-            StartSelectedStage();
-        }
     }
 
     private void BuildUi()
@@ -44,8 +30,6 @@ public class MenuSceneController : MonoBehaviour
             Debug.LogWarning("MenuSceneController: No stages are configured.");
             return;
         }
-
-        stageButtons = new Button[stageCount];
 
         Canvas canvas = RuntimeUiFactory.CreateCanvas(transform, "MenuCanvas");
         Image background = RuntimeUiFactory.CreateImage(canvas.transform, "Background", RuntimeUiTheme.BackgroundColor);
@@ -71,11 +55,6 @@ public class MenuSceneController : MonoBehaviour
         RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
     }
 
-    private void StartSelectedStage()
-    {
-        SelectStageAndLoadMain(CompassGameState.SelectedStageIndex);
-    }
-
     private void SelectStageAndLoadMain(int stageIndex)
     {
         if (isTransitioning)
@@ -88,34 +67,10 @@ public class MenuSceneController : MonoBehaviour
         SceneManager.LoadScene(MainSceneName);
     }
 
-    private void SelectCurrentStageButton()
-    {
-        if (stageButtons == null || stageButtons.Length == 0)
-        {
-            return;
-        }
-
-        int buttonIndex = Mathf.Clamp(
-            CompassGameState.SelectedStageIndex - 1,
-            0,
-            stageButtons.Length - 1);
-
-        if (buttonIndex >= 0 && buttonIndex < stageButtons.Length && stageButtons[buttonIndex] != null)
-        {
-            stageButtons[buttonIndex].Select();
-        }
-    }
-
     private RectTransform CreateCard(Transform parent)
     {
-        Image image = RuntimeUiFactory.CreateImage(parent, "Card", CardColor);
-        RectTransform rectTransform = image.rectTransform;
-        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        rectTransform.sizeDelta = CardSize;
-        rectTransform.anchoredPosition = Vector2.zero;
-        return rectTransform;
+        Image image = RuntimeUiFactory.CreateCardImage(parent, "Card", CardColor, CardSize);
+        return image.rectTransform;
     }
 
     private void CreateStageButtons(Transform parent, int stageCount)
@@ -136,7 +91,7 @@ public class MenuSceneController : MonoBehaviour
                 int stageIndex = (row * columns) + column + 1;
                 float x = startX + (column * columnSpacing);
 
-                stageButtons[stageIndex - 1] = CreateStageButton(
+                CreateStageButton(
                     parent,
                     $"Stage{stageIndex}Button",
                     stageIndex,
@@ -145,7 +100,7 @@ public class MenuSceneController : MonoBehaviour
         }
     }
 
-    private Button CreateStageButton(Transform parent, string objectName, int stageIndex, Vector2 anchoredPosition)
+    private void CreateStageButton(Transform parent, string objectName, int stageIndex, Vector2 anchoredPosition)
     {
         GameObject buttonObject = new GameObject(objectName);
         buttonObject.transform.SetParent(parent, false);
@@ -185,7 +140,5 @@ public class MenuSceneController : MonoBehaviour
         labelRect.anchorMax = Vector2.one;
         labelRect.offsetMin = Vector2.zero;
         labelRect.offsetMax = Vector2.zero;
-
-        return button;
     }
 }

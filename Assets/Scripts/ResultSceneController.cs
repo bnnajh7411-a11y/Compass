@@ -24,21 +24,9 @@ public class ResultSceneController : MonoBehaviour
     private void Start()
     {
         RuntimeUiFactory.EnsureEventSystem();
+        RuntimeUiFactory.DisableEventSystemNavigation();
         BuildUi();
         RefreshUi();
-    }
-
-    private void Update()
-    {
-        if (isTransitioning)
-        {
-            return;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
-        {
-            LoadPrimaryAction();
-        }
     }
 
     private void BuildUi()
@@ -100,7 +88,6 @@ public class ResultSceneController : MonoBehaviour
             new Vector2(-IconButtonSpacing, 56f),
             LoadCurrentStageScene);
 
-        Button primaryButton;
         if (CompassGameState.HasNextStage)
         {
             CreateActionButton(
@@ -111,7 +98,7 @@ public class ResultSceneController : MonoBehaviour
                 new Vector2(0f, 56f),
                 LoadMenuScene);
 
-            primaryButton = CreateActionButton(
+            CreateActionButton(
                 card,
                 "PrimaryButton",
                 nextStageButtonSprite,
@@ -121,7 +108,7 @@ public class ResultSceneController : MonoBehaviour
         }
         else
         {
-            primaryButton = CreateActionButton(
+            CreateActionButton(
                 card,
                 "PrimaryButton",
                 menuButtonSprite,
@@ -129,8 +116,6 @@ public class ResultSceneController : MonoBehaviour
                 new Vector2(0f, 56f),
                 LoadMenuScene);
         }
-
-        primaryButton.Select();
         RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
     }
 
@@ -195,17 +180,15 @@ public class ResultSceneController : MonoBehaviour
 
     private RectTransform CreateCard(Transform parent)
     {
-        Image image = RuntimeUiFactory.CreateImage(parent, "Card", CardColor);
-        RectTransform rectTransform = image.rectTransform;
-        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        rectTransform.sizeDelta = new Vector2(800f, 480f);
-        rectTransform.anchoredPosition = Vector2.zero;
-        return rectTransform;
+        Image image = RuntimeUiFactory.CreateCardImage(
+            parent,
+            "Card",
+            CardColor,
+            new Vector2(800f, 480f));
+        return image.rectTransform;
     }
 
-    private Button CreateActionButton(
+    private void CreateActionButton(
         Transform parent,
         string objectName,
         Sprite iconSprite,
@@ -231,8 +214,6 @@ public class ResultSceneController : MonoBehaviour
         rectTransform.pivot = new Vector2(0.5f, 0f);
         rectTransform.sizeDelta = sizeDelta;
         rectTransform.anchoredPosition = anchoredPosition;
-
-        return button;
     }
 
     private void CreateHeader(Transform parent)

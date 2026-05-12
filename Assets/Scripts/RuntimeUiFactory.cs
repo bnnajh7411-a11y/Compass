@@ -7,6 +7,7 @@ public static class RuntimeUiFactory
     private const string AudioIconResourcesPath = "AudioIcon";
     private const float AudioButtonSize = 56f;
     private const float AudioButtonMargin = 24f;
+    private const float CardCornerRadius = 36f;
 
     private static Font defaultFont;
     private static Sprite audioIconSprite;
@@ -21,6 +22,29 @@ public static class RuntimeUiFactory
         GameObject eventSystemObject = new GameObject("EventSystem");
         eventSystemObject.AddComponent<EventSystem>();
         eventSystemObject.AddComponent<StandaloneInputModule>();
+    }
+
+    public static void EnableEventSystemNavigation()
+    {
+        EventSystem eventSystem = Object.FindFirstObjectByType<EventSystem>();
+        if (eventSystem == null)
+        {
+            return;
+        }
+
+        eventSystem.sendNavigationEvents = true;
+    }
+
+    public static void DisableEventSystemNavigation()
+    {
+        EventSystem eventSystem = Object.FindFirstObjectByType<EventSystem>();
+        if (eventSystem == null)
+        {
+            return;
+        }
+
+        eventSystem.sendNavigationEvents = false;
+        eventSystem.SetSelectedGameObject(null);
     }
 
     public static Canvas CreateCanvas(Transform parent, string canvasName)
@@ -49,6 +73,29 @@ public static class RuntimeUiFactory
         Image image = imageObject.AddComponent<Image>();
         image.sprite = sprite ?? RuntimeSpriteFactory.GetWhiteSprite();
         image.color = color;
+        return image;
+    }
+
+    public static Image CreateCardImage(Transform parent, string objectName, Color color, Vector2 sizeDelta)
+    {
+        Image image = CreateImage(
+            parent,
+            objectName,
+            color,
+            RuntimeSpriteFactory.GetRoundedRectSprite(
+                Mathf.RoundToInt(sizeDelta.x),
+                Mathf.RoundToInt(sizeDelta.y),
+                CardCornerRadius));
+
+        image.raycastTarget = false;
+        image.preserveAspect = false;
+
+        RectTransform rectTransform = image.rectTransform;
+        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
+        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
+        rectTransform.pivot = new Vector2(0.5f, 0.5f);
+        rectTransform.sizeDelta = sizeDelta;
+        rectTransform.anchoredPosition = Vector2.zero;
         return image;
     }
 

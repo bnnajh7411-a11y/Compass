@@ -16,30 +16,12 @@ public class StartSceneController : MonoBehaviour
     [SerializeField] private Sprite startButtonSprite;
 
     private bool isTransitioning;
-    private Button startButton;
 
     private void Start()
     {
         RuntimeUiFactory.EnsureEventSystem();
+        RuntimeUiFactory.DisableEventSystemNavigation();
         BuildUi();
-
-        if (startButton != null)
-        {
-            startButton.Select();
-        }
-    }
-
-    private void Update()
-    {
-        if (isTransitioning)
-        {
-            return;
-        }
-
-        if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
-        {
-            LoadMenuScene();
-        }
     }
 
     private void BuildUi()
@@ -50,7 +32,7 @@ public class StartSceneController : MonoBehaviour
 
         RectTransform card = CreateCard(background.transform);
         RectTransform title = CreateTitleImage(background.transform);
-        startButton = CreateStartButton(card);
+        CreateStartButton(card);
         RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
 
         if (title != null)
@@ -73,14 +55,12 @@ public class StartSceneController : MonoBehaviour
 
     private RectTransform CreateCard(Transform parent)
     {
-        Image image = RuntimeUiFactory.CreateImage(parent, "Card", new Color(0.10f, 0.12f, 0.17f, 0));
-        RectTransform rectTransform = image.rectTransform;
-        rectTransform.anchorMin = new Vector2(0.5f, 0.5f);
-        rectTransform.anchorMax = new Vector2(0.5f, 0.5f);
-        rectTransform.pivot = new Vector2(0.5f, 0.5f);
-        rectTransform.sizeDelta = new Vector2(820f, 460f);
-        rectTransform.anchoredPosition = Vector2.zero;
-        return rectTransform;
+        Image image = RuntimeUiFactory.CreateCardImage(
+            parent,
+            "Card",
+            new Color(0.10f, 0.12f, 0.17f, 0f),
+            new Vector2(820f, 460f));
+        return image.rectTransform;
     }
 
     private RectTransform CreateTitleImage(Transform parent)
@@ -110,12 +90,12 @@ public class StartSceneController : MonoBehaviour
         return rectTransform;
     }
 
-    private Button CreateStartButton(Transform parent)
+    private void CreateStartButton(Transform parent)
     {
         if (startButtonSprite == null)
         {
             Debug.LogWarning("StartSceneController: Start button sprite is not assigned.");
-            return null;
+            return;
         }
 
         GameObject buttonObject = new GameObject("StartButton");
@@ -136,8 +116,6 @@ public class StartSceneController : MonoBehaviour
         rectTransform.pivot = new Vector2(0.5f, 0f);
         rectTransform.sizeDelta = new Vector2(200f, 200f);
         rectTransform.anchoredPosition = new Vector2(0f, 60f);
-
-        return button;
     }
 
     private IEnumerator AnimateTitleFadeIn(RectTransform title)
