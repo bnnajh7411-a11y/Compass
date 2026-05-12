@@ -6,7 +6,7 @@ using UnityEngine.UI;
 public class MenuSceneController : MonoBehaviour
 {
     private const string MainSceneName = "Main";
-    private static readonly Color CardColor = new Color32(0x0D, 0x11, 0x16, 0xF2);
+    private static readonly Color CardColor = new Color32(0xE7, 0xF3, 0xF1, 0xC5);
     private static readonly Vector2 CardSize = new Vector2(920f, 700f);
     private static readonly Vector2 StageButtonSize = new Vector2(150f, 150f);
     private const float StageColumnSpacing = 210f;

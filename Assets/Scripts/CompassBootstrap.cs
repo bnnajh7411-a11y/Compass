@@ -280,7 +280,7 @@ public class CompassBootstrap : MonoBehaviour
         panelObject.transform.SetParent(GetOrCreateCanvas().transform, false);
 
         Image background = panelObject.AddComponent<Image>();
-        background.color = new Color(0.05f, 0.05f, 0.07f, 0.88f);
+        background.color = new Color32(0xE7, 0xF3, 0xF1, 0xC5);
         background.raycastTarget = false;
 
         RectTransform panelRect = panelObject.GetComponent<RectTransform>();

@@ -8,7 +8,7 @@ public class ResultSceneController : MonoBehaviour
     private const string MainSceneName = "Main";
     private const string MenuSceneName = "Menu";
     private const string DefaultMessage = "No submitted result yet.";
-    private static readonly Color CardColor = new Color32(0x0D, 0x11, 0x16, 0xF0);
+    private static readonly Color CardColor = new Color32(0xE7, 0xF3, 0xF1, 0xC5);
     private static readonly Vector2 ActionButtonSize = new Vector2(112f, 112f);
     private const float IconButtonSpacing = 230.4f;
 
