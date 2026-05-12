@@ -261,7 +261,7 @@ public class CompassBootstrap : MonoBehaviour
         text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         text.fontSize = 25;
         text.alignment = TextAnchor.LowerLeft;
-        text.color = new Color(0.94f, 0.94f, 0.94f, 1f);
+        text.color = RuntimeUiTheme.TextColor;
         text.text = "정확도 0% (0/0)";
 
         RectTransform rectTransform = scoreObject.GetComponent<RectTransform>();
@@ -299,7 +299,7 @@ public class CompassBootstrap : MonoBehaviour
         title.fontSize = 24;
         title.fontStyle = FontStyle.Bold;
         title.alignment = TextAnchor.UpperCenter;
-        title.color = Color.white;
+        title.color = RuntimeUiTheme.TextColor;
         title.raycastTarget = false;
         title.text = "<보기>";
 
@@ -404,7 +404,7 @@ public class CompassBootstrap : MonoBehaviour
             24,
             FontStyle.Bold,
             TextAnchor.MiddleCenter,
-            RuntimeUiTheme.ButtonLabelColor,
+            RuntimeUiTheme.TextColor,
             Vector2.zero,
             Vector2.one,
             new Vector2(0.5f, 0.5f),

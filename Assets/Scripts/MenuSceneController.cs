@@ -9,9 +9,17 @@ public class MenuSceneController : MonoBehaviour
     private static readonly Color CardColor = new Color32(0xE7, 0xF3, 0xF1, 0xC5);
     private static readonly Vector2 CardSize = new Vector2(920f, 700f);
     private static readonly Vector2 StageButtonSize = new Vector2(150f, 150f);
-    private const float StageColumnSpacing = 210f;
-    private const float StageRowSpacing = 160f;
-    private const float StageGridTopY = 332.8f;
+    private const float StageColumnSpacing = 283.5f;
+    private const float StageRowSpacing = 198f;
+    private const float StageGridTopY = 400f;
+    private static readonly Vector2 StageNumberTextSize = new Vector2(120f, 40f);
+    private static readonly Vector2 StageBestTextSize = new Vector2(120f, 28f);
+    private static readonly Vector2 StageNumberTextPosition = new Vector2(0f, 20f);
+    private static readonly Vector2 StageBestTextPosition = new Vector2(0f, -38f);
+    private static readonly Vector2 ControlsTextSize = new Vector2(270f, 170f);
+    private static readonly Vector2 ControlsTextPosition = new Vector2(-28f, -28f);
+    private const int StageBestFontSize = 18;
+    private const int ControlsFontSize = 20;
 
     private bool isTransitioning;
 
@@ -44,12 +52,27 @@ public class MenuSceneController : MonoBehaviour
             40,
             FontStyle.Bold,
             TextAnchor.UpperCenter,
-            new Color(0.96f, 0.97f, 0.99f, 1f),
+            RuntimeUiTheme.TextColor,
             new Vector2(0f, 1f),
             new Vector2(1f, 1f),
             new Vector2(0.5f, 1f),
             new Vector2(700f, 54f),
             new Vector2(0f, -18f));
+
+        Text controlsText = RuntimeUiFactory.CreateText(
+            canvas.transform,
+            "Controls",
+            "<조작 방법>\nA/D  중심 교체\nW/S  길이 조절\nR  그림 초기화\nSpace  그리기\nEnter  결과 보기",
+            ControlsFontSize,
+            FontStyle.Bold,
+            TextAnchor.UpperLeft,
+            RuntimeUiTheme.TextColor,
+            new Vector2(1f, 1f),
+            new Vector2(1f, 1f),
+            new Vector2(1f, 1f),
+            ControlsTextSize,
+            ControlsTextPosition);
+        controlsText.supportRichText = false;
 
         CreateStageButtons(card, stageCount);
         RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
@@ -121,24 +144,32 @@ public class MenuSceneController : MonoBehaviour
         rectTransform.sizeDelta = StageButtonSize;
         rectTransform.anchoredPosition = anchoredPosition;
 
-        Text label = RuntimeUiFactory.CreateText(
+        RuntimeUiFactory.CreateText(
             buttonObject.transform,
             "Label",
             stageIndex.ToString(),
             30,
             FontStyle.Bold,
             TextAnchor.MiddleCenter,
-            RuntimeUiTheme.ButtonLabelColor,
-            Vector2.zero,
-            Vector2.one,
+            RuntimeUiTheme.TextColor,
             new Vector2(0.5f, 0.5f),
-            Vector2.zero,
-            Vector2.zero);
+            new Vector2(0.5f, 0.5f),
+            new Vector2(0.5f, 0.5f),
+            StageNumberTextSize,
+            StageNumberTextPosition);
 
-        RectTransform labelRect = label.rectTransform;
-        labelRect.anchorMin = Vector2.zero;
-        labelRect.anchorMax = Vector2.one;
-        labelRect.offsetMin = Vector2.zero;
-        labelRect.offsetMax = Vector2.zero;
+        RuntimeUiFactory.CreateText(
+            buttonObject.transform,
+            "Best",
+            CompassGameState.GetBestAccuracyText(stageIndex),
+            StageBestFontSize,
+            FontStyle.Bold,
+            TextAnchor.MiddleCenter,
+            RuntimeUiTheme.TextColor,
+            new Vector2(0.5f, 0.5f),
+            new Vector2(0.5f, 0.5f),
+            new Vector2(0.5f, 0.5f),
+            StageBestTextSize,
+            StageBestTextPosition);
     }
 }

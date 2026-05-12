@@ -2,6 +2,7 @@ using UnityEngine;
 
 public static class CompassGameState
 {
+    private const string StageBestAccuracyKeyPrefix = "Compass.StageBestAccuracy.";
     private const string DefaultProgressText = "Accuracy 0% (0/0) | Line 0%";
     public const int FirstStageIndex = 1;
     private static readonly string[] StageGuideNames =
@@ -26,6 +27,7 @@ public static class CompassGameState
         HasSubmittedResult = true;
         LastAccuracy = Mathf.Clamp(accuracy, 0f, 100f);
         LastProgressText = string.IsNullOrWhiteSpace(progressText) ? DefaultProgressText : progressText;
+        UpdateBestAccuracy(SelectedStageIndex, LastAccuracy);
     }
 
     public static void SelectStage(int stageIndex)
@@ -50,6 +52,27 @@ public static class CompassGameState
         return GetStageLabel(SelectedStageIndex);
     }
 
+    public static bool TryGetBestAccuracy(int stageIndex, out float bestAccuracy)
+    {
+        int clampedStageIndex = Mathf.Clamp(stageIndex, FirstStageIndex, LastStageIndex);
+        string key = GetBestAccuracyKey(clampedStageIndex);
+        if (!PlayerPrefs.HasKey(key))
+        {
+            bestAccuracy = 0f;
+            return false;
+        }
+
+        bestAccuracy = Mathf.Clamp(PlayerPrefs.GetFloat(key, 0f), 0f, 100f);
+        return true;
+    }
+
+    public static string GetBestAccuracyText(int stageIndex)
+    {
+        return TryGetBestAccuracy(stageIndex, out float bestAccuracy)
+            ? $"BEST {bestAccuracy:0}%"
+            : "BEST --";
+    }
+
     public static string GetStageGuideName(int stageIndex)
     {
         if (StageGuideNames.Length == 0)
@@ -59,6 +82,27 @@ public static class CompassGameState
 
         int clampedIndex = Mathf.Clamp(stageIndex, FirstStageIndex, LastStageIndex) - FirstStageIndex;
         return StageGuideNames[clampedIndex];
+    }
+
+    private static void UpdateBestAccuracy(int stageIndex, float accuracy)
+    {
+        int clampedStageIndex = Mathf.Clamp(stageIndex, FirstStageIndex, LastStageIndex);
+        string key = GetBestAccuracyKey(clampedStageIndex);
+        bool hasExistingValue = PlayerPrefs.HasKey(key);
+        float existingBest = hasExistingValue ? PlayerPrefs.GetFloat(key, 0f) : 0f;
+
+        if (hasExistingValue && accuracy <= existingBest)
+        {
+            return;
+        }
+
+        PlayerPrefs.SetFloat(key, accuracy);
+        PlayerPrefs.Save();
+    }
+
+    private static string GetBestAccuracyKey(int stageIndex)
+    {
+        return $"{StageBestAccuracyKeyPrefix}{Mathf.Clamp(stageIndex, FirstStageIndex, LastStageIndex)}";
     }
 
 }
