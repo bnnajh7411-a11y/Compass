@@ -61,6 +61,8 @@ Assets/Scripts/
  MenuSceneController.cs
  ResultSceneController.cs
  Rotate.cs
+ RuntimeAudioState.cs
+ RuntimeAudioToggleButton.cs
  RuntimeSpriteFactory.cs
  RuntimeUiFactory.cs
  RuntimeUiTheme.cs

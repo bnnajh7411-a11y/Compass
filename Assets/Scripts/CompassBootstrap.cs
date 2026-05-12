@@ -58,6 +58,7 @@ public class CompassBootstrap : MonoBehaviour
     private void BuildScene()
     {
         CleanupRuntime();
+        RuntimeUiFactory.EnsureEventSystem();
 
         Camera mainCamera = Camera.main;
         if (mainCamera == null)
@@ -125,7 +126,6 @@ public class CompassBootstrap : MonoBehaviour
             CreateGridBackdrop("[CompassGrid]", gridBounds, mainCamera.gameObject.layer);
             CreateGridBackdrop("[CompassPreviewGrid]", gridBounds, previewLayer);
             CreatePreviewCamera(previewLayer, bounds);
-            RuntimeUiFactory.EnsureEventSystem();
             CreatePreviewPanel();
         }
         else
@@ -134,6 +134,7 @@ public class CompassBootstrap : MonoBehaviour
             CreateGridBackdrop("[CompassGrid]", gridBounds, mainCamera.gameObject.layer);
         }
 
+        RuntimeUiFactory.CreateAudioToggleButton(GetOrCreateCanvas().transform);
         scoreManager.Refresh();
     }
 

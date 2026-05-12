@@ -68,6 +68,7 @@ public class MenuSceneController : MonoBehaviour
             new Vector2(0f, -18f));
 
         CreateStageButtons(card, stageCount);
+        RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
     }
 
     private void StartSelectedStage()

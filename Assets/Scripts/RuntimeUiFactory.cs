@@ -4,7 +4,12 @@ using UnityEngine.UI;
 
 public static class RuntimeUiFactory
 {
+    private const string AudioIconResourcesPath = "AudioIcon";
+    private const float AudioButtonSize = 56f;
+    private const float AudioButtonMargin = 24f;
+
     private static Font defaultFont;
+    private static Sprite audioIconSprite;
 
     public static void EnsureEventSystem()
     {
@@ -45,6 +50,32 @@ public static class RuntimeUiFactory
         image.sprite = sprite ?? RuntimeSpriteFactory.GetWhiteSprite();
         image.color = color;
         return image;
+    }
+
+    public static Button CreateAudioToggleButton(Transform parent)
+    {
+        GameObject buttonObject = new GameObject("AudioButton");
+        buttonObject.transform.SetParent(parent, false);
+
+        Image image = buttonObject.AddComponent<Image>();
+        image.sprite = GetAudioIconSprite();
+        image.color = RuntimeAudioState.IsMuted ? new Color(1f, 1f, 1f, 0.45f) : Color.white;
+        image.preserveAspect = true;
+
+        Button button = buttonObject.AddComponent<Button>();
+        button.transition = Selectable.Transition.None;
+        button.targetGraphic = image;
+
+        RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(0f, 1f);
+        rectTransform.anchorMax = new Vector2(0f, 1f);
+        rectTransform.pivot = new Vector2(0f, 1f);
+        rectTransform.sizeDelta = new Vector2(AudioButtonSize, AudioButtonSize);
+        rectTransform.anchoredPosition = new Vector2(AudioButtonMargin, -AudioButtonMargin);
+
+        buttonObject.AddComponent<RuntimeAudioToggleButton>();
+        buttonObject.transform.SetAsLastSibling();
+        return button;
     }
 
     public static Text CreateText(
@@ -115,5 +146,34 @@ public static class RuntimeUiFactory
         }
 
         return defaultFont;
+    }
+
+    private static Sprite GetAudioIconSprite()
+    {
+        if (audioIconSprite != null)
+        {
+            return audioIconSprite;
+        }
+
+        Sprite[] sprites = Resources.LoadAll<Sprite>(AudioIconResourcesPath);
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            Sprite sprite = sprites[i];
+            if (sprite != null && string.Equals(sprite.name, "AudioIcon", System.StringComparison.OrdinalIgnoreCase))
+            {
+                audioIconSprite = sprite;
+                return audioIconSprite;
+            }
+        }
+
+        if (sprites.Length > 0)
+        {
+            audioIconSprite = sprites[0];
+            return audioIconSprite;
+        }
+
+        Debug.LogWarning("RuntimeUiFactory: Audio icon sprite was not found in Resources/AudioIcon.");
+        audioIconSprite = RuntimeSpriteFactory.GetWhiteSprite();
+        return audioIconSprite;
     }
 }

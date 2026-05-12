@@ -131,6 +131,7 @@ public class ResultSceneController : MonoBehaviour
         }
 
         primaryButton.Select();
+        RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
     }
 
     private void RefreshUi()

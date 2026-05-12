@@ -51,6 +51,7 @@ public class StartSceneController : MonoBehaviour
         RectTransform card = CreateCard(background.transform);
         RectTransform title = CreateTitleImage(background.transform);
         startButton = CreateStartButton(card);
+        RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
 
         if (title != null)
         {
