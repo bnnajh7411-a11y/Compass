@@ -1,12 +1,9 @@
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public class ResultSceneController : MonoBehaviour
 {
-    private const string MainSceneName = "Main";
-    private const string MenuSceneName = "Menu";
     private static readonly Color CardColor = new Color32(0xE7, 0xF3, 0xF1, 0xC5);
     private static readonly Vector2 ActionButtonSize = new Vector2(112f, 112f);
     private const float IconButtonSpacing = 230.4f;
@@ -33,6 +30,20 @@ public class ResultSceneController : MonoBehaviour
         RuntimeUiFactory.Stretch(background.rectTransform);
 
         RectTransform card = CreateCard(background.transform);
+
+        RuntimeUiFactory.CreateText(
+            card,
+            "Complete",
+            "COMPLETE",
+            40,
+            FontStyle.Bold,
+            TextAnchor.UpperCenter,
+            RuntimeUiTheme.TextColor,
+            new Vector2(0f, 1f),
+            new Vector2(1f, 1f),
+            new Vector2(0.5f, 1f),
+            new Vector2(700f, 54f),
+            new Vector2(0f, -18f));
 
         accuracyText = RuntimeUiFactory.CreateText(
             card,
@@ -103,7 +114,7 @@ public class ResultSceneController : MonoBehaviour
         }
 
         isTransitioning = true;
-        SceneManager.LoadScene(MainSceneName);
+        GameManager.GoToCurrentStageScene();
     }
 
     private void LoadPrimaryAction()
@@ -113,16 +124,8 @@ public class ResultSceneController : MonoBehaviour
             return;
         }
 
-        if (GameManager.HasNextStage)
-        {
-            isTransitioning = true;
-            GameManager.SelectStage(GameManager.GetNextStageIndex());
-            SceneManager.LoadScene(MainSceneName);
-            return;
-        }
-
         isTransitioning = true;
-        SceneManager.LoadScene(MenuSceneName);
+        GameManager.GoToNextStageOrMenuScene();
     }
 
     private void LoadMenuScene()
@@ -133,7 +136,7 @@ public class ResultSceneController : MonoBehaviour
         }
 
         isTransitioning = true;
-        SceneManager.LoadScene(MenuSceneName);
+        GameManager.GoToMenuScene();
     }
 
     private RectTransform CreateCard(Transform parent)

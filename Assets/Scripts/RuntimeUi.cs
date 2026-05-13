@@ -3,6 +3,16 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+public static class RuntimeUiTheme
+{
+    public static readonly Color BackgroundColor = new Color32(0xBC, 0xF2, 0xEE, 0xFF);
+    public static readonly Color TextColor = new Color32(0xFF, 0x7C, 0xB2, 0xFF);
+    public static readonly Color ButtonNormalColor = new Color32(0xFF, 0xFF, 0xFF, 0xFF);
+    public static readonly Color ButtonHoverColor = new Color32(0xE0, 0xE0, 0xE0, 0xFF);
+    public static readonly Color ButtonPressedColor = new Color32(0xC0, 0xC0, 0xC0, 0xFF);
+    public static readonly Color ButtonDisabledColor = new Color32(0xD8, 0xD8, 0xD8, 0xFF);
+}
+
 public static class RuntimeUiFactory
 {
     private const string AudioIconResourcesPath = "AudioIcon";
@@ -106,56 +116,36 @@ public static class RuntimeUiFactory
 
     public static Button CreateAudioToggleButton(Transform parent)
     {
-        GameObject buttonObject = new GameObject("AudioButton");
-        buttonObject.transform.SetParent(parent, false);
+        Button button = CreateIconButton(
+            parent,
+            "AudioButton",
+            GetAudioIconSprite(),
+            GameManager.IsMuted ? new Color(1f, 1f, 1f, 0.45f) : Color.white,
+            new Vector2(AudioButtonSize, AudioButtonSize),
+            new Vector2(AudioButtonMargin * 1.8f, -AudioButtonMargin * 1.5f),
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            new Vector2(0f, 1f),
+            false);
 
-        Image image = buttonObject.AddComponent<Image>();
-        image.sprite = GetAudioIconSprite();
-        image.color = GameManager.IsMuted ? new Color(1f, 1f, 1f, 0.45f) : Color.white;
-        image.preserveAspect = true;
-
-        Button button = buttonObject.AddComponent<Button>();
-        button.transition = Selectable.Transition.None;
-        button.targetGraphic = image;
-
-        RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(0f, 1f);
-        rectTransform.anchorMax = new Vector2(0f, 1f);
-        rectTransform.pivot = new Vector2(0f, 1f);
-        rectTransform.sizeDelta = new Vector2(AudioButtonSize, AudioButtonSize);
-        rectTransform.anchoredPosition = new Vector2(AudioButtonMargin * 1.8f, -AudioButtonMargin * 1.5f);
-
-        buttonObject.AddComponent<RuntimeAudioToggleButton>();
-        buttonObject.transform.SetAsLastSibling();
+        button.gameObject.AddComponent<RuntimeAudioToggleButton>();
         return button;
     }
 
     public static Button CreateCheckIconButton(Transform parent, UnityAction onClick)
     {
-        GameObject buttonObject = new GameObject("CheckButton");
-        buttonObject.transform.SetParent(parent, false);
-
-        Image image = buttonObject.AddComponent<Image>();
-        image.sprite = GetCheckIconSprite();
-        image.color = RuntimeUiTheme.ButtonNormalColor;
-        image.preserveAspect = true;
-
-        Button button = buttonObject.AddComponent<Button>();
-        ApplyThemeButton(button, image);
-        if (onClick != null)
-        {
-            button.onClick.AddListener(onClick);
-        }
-
-        RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(1f, 0f);
-        rectTransform.anchorMax = new Vector2(1f, 0f);
-        rectTransform.pivot = new Vector2(1f, 0f);
-        rectTransform.sizeDelta = new Vector2(CheckButtonSize, CheckButtonSize);
-        rectTransform.anchoredPosition = new Vector2(-CheckButtonMargin * 1.8f, CheckButtonMargin * 1.5f);
-
-        buttonObject.transform.SetAsLastSibling();
-        return button;
+        return CreateIconButton(
+            parent,
+            "CheckButton",
+            GetCheckIconSprite(),
+            RuntimeUiTheme.ButtonNormalColor,
+            new Vector2(CheckButtonSize, CheckButtonSize),
+            new Vector2(-CheckButtonMargin * 1.8f, CheckButtonMargin * 1.5f),
+            new Vector2(1f, 0f),
+            new Vector2(1f, 0f),
+            new Vector2(1f, 0f),
+            true,
+            onClick);
     }
 
     public static Text CreateText(
@@ -216,6 +206,54 @@ public static class RuntimeUiFactory
         rectTransform.anchorMax = Vector2.one;
         rectTransform.offsetMin = Vector2.zero;
         rectTransform.offsetMax = Vector2.zero;
+    }
+
+    private static Button CreateIconButton(
+        Transform parent,
+        string objectName,
+        Sprite iconSprite,
+        Color color,
+        Vector2 sizeDelta,
+        Vector2 anchoredPosition,
+        Vector2 anchorMin,
+        Vector2 anchorMax,
+        Vector2 pivot,
+        bool useThemeButton,
+        UnityAction onClick = null)
+    {
+        GameObject buttonObject = new GameObject(objectName);
+        buttonObject.transform.SetParent(parent, false);
+
+        Image image = buttonObject.AddComponent<Image>();
+        image.sprite = iconSprite ?? RuntimeSpriteFactory.GetWhiteSprite();
+        image.color = color;
+        image.preserveAspect = true;
+
+        Button button = buttonObject.AddComponent<Button>();
+        if (useThemeButton)
+        {
+            ApplyThemeButton(button, image);
+        }
+        else
+        {
+            button.transition = Selectable.Transition.None;
+            button.targetGraphic = image;
+        }
+
+        if (onClick != null)
+        {
+            button.onClick.AddListener(onClick);
+        }
+
+        RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
+        rectTransform.anchorMin = anchorMin;
+        rectTransform.anchorMax = anchorMax;
+        rectTransform.pivot = pivot;
+        rectTransform.sizeDelta = sizeDelta;
+        rectTransform.anchoredPosition = anchoredPosition;
+
+        buttonObject.transform.SetAsLastSibling();
+        return button;
     }
 
     private static Font GetDefaultFont()
@@ -284,5 +322,69 @@ public static class RuntimeUiFactory
         Debug.LogWarning("RuntimeUiFactory: Check icon sprite was not found in Resources/CheckIcon.");
         checkIconSprite = RuntimeSpriteFactory.GetWhiteSprite();
         return checkIconSprite;
+    }
+}
+
+[DisallowMultipleComponent]
+public sealed class RuntimeAudioToggleButton : MonoBehaviour
+{
+    private static readonly Color EnabledColor = Color.white;
+    private static readonly Color MutedColor = new Color(1f, 1f, 1f, 0.45f);
+
+    private Image iconImage;
+    private Button button;
+
+    private void Awake()
+    {
+        iconImage = GetComponent<Image>();
+        button = GetComponent<Button>();
+
+        if (button != null)
+        {
+            Navigation navigation = button.navigation;
+            navigation.mode = Navigation.Mode.None;
+            button.navigation = navigation;
+        }
+    }
+
+    private void OnEnable()
+    {
+        if (button != null)
+        {
+            button.onClick.AddListener(HandleClick);
+        }
+
+        GameManager.MutedChanged += HandleMutedChanged;
+        Refresh();
+    }
+
+    private void OnDisable()
+    {
+        if (button != null)
+        {
+            button.onClick.RemoveListener(HandleClick);
+        }
+
+        GameManager.MutedChanged -= HandleMutedChanged;
+    }
+
+    private void HandleClick()
+    {
+        GameManager.Toggle();
+    }
+
+    private void HandleMutedChanged(bool _)
+    {
+        Refresh();
+    }
+
+    private void Refresh()
+    {
+        if (iconImage == null)
+        {
+            return;
+        }
+
+        iconImage.color = GameManager.IsMuted ? MutedColor : EnabledColor;
     }
 }

@@ -1,12 +1,10 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class StartSceneController : MonoBehaviour
 {
-    private const string MenuSceneName = "Menu";
     private static readonly Vector2 TitleSize = new Vector2(480f, 300f);
     private static readonly Vector2 TitlePosition = new Vector2(0f, 330f);
     private const float TitleFadeDuration = 3.0f;
@@ -49,8 +47,7 @@ public class StartSceneController : MonoBehaviour
         }
 
         isTransitioning = true;
-        GameManager.SelectStage(GameManager.FirstStageIndex);
-        SceneManager.LoadScene(MenuSceneName);
+        GameManager.GoToMenuScene(true);
     }
 
     private RectTransform CreateCard(Transform parent)

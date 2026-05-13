@@ -1,11 +1,9 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class MenuSceneController : MonoBehaviour
 {
-    private const string MainSceneName = "Main";
     private static readonly Color CardColor = new Color32(0xE7, 0xF3, 0xF1, 0xC5);
     private static readonly Vector2 CardSize = new Vector2(920f, 700f);
     private static readonly Vector2 StageButtonSize = new Vector2(150f, 150f);
@@ -99,8 +97,7 @@ public class MenuSceneController : MonoBehaviour
         }
 
         isTransitioning = true;
-        GameManager.SelectStage(stageIndex);
-        SceneManager.LoadScene(MainSceneName);
+        GameManager.GoToStageScene(stageIndex);
     }
 
     private RectTransform CreateCard(Transform parent)

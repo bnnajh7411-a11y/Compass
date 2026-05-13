@@ -1,11 +1,8 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(TrailRenderer))]
 public class Rotate : MonoBehaviour
 {
-    private const string ResultSceneName = "Result";
-
     public GameObject target1;
     public GameObject target2;
     public GameObject target3;
@@ -366,16 +363,13 @@ public class Rotate : MonoBehaviour
         isTransitioning = true;
 
         float accuracy = 0f;
-        string progressText = "Accuracy 0% (0/0) | Line 0%";
 
         if (ScoreManager.Instance != null)
         {
             accuracy = ScoreManager.Instance.GetAccuracy();
-            progressText = ScoreManager.Instance.GetProgressText();
         }
 
-        GameManager.StoreResult(accuracy, progressText);
-        SceneManager.LoadScene(ResultSceneName);
+        GameManager.CompleteRun(accuracy);
     }
 
     private void ClearCurrentTrail()

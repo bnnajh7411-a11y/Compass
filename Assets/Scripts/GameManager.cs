@@ -1,10 +1,9 @@
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public sealed class GameManager : MonoBehaviour
+public sealed partial class GameManager : MonoBehaviour
 {
     private const string StageBestAccuracyKeyPrefix = "Compass.StageBestAccuracy.";
-    private const string DefaultProgressText = "Accuracy 0% (0/0) | Line 0%";
     public const int FirstStageIndex = 1;
     private static readonly string[] StageGuideNames =
     {
@@ -20,10 +19,7 @@ public sealed class GameManager : MonoBehaviour
 
     private bool isInitialized;
     private bool isMuted;
-    private bool mainCameraInteractionEnabled = true;
-    private bool hasSubmittedResult;
     private float lastAccuracy;
-    private string lastProgressText = DefaultProgressText;
     private int selectedStageIndex = FirstStageIndex;
     private AudioSource backgroundMusicSource;
 
@@ -37,10 +33,7 @@ public sealed class GameManager : MonoBehaviour
         }
     }
 
-    public static bool HasSubmittedResult => Instance.hasSubmittedResult;
     public static float LastAccuracy => Instance.lastAccuracy;
-    public static string LastProgressText => Instance.lastProgressText;
-    public static bool IsMainCameraInteractionEnabled => Instance.mainCameraInteractionEnabled;
     public static int SelectedStageIndex => Instance.selectedStageIndex;
     public static int StageCount => StageGuideNames.Length;
     public static int LastStageIndex => StageCount;
@@ -74,12 +67,6 @@ public sealed class GameManager : MonoBehaviour
         manager.isMuted = muted;
         manager.ApplyVolume();
         MutedChanged?.Invoke(manager.isMuted);
-    }
-
-    public static void SetMainCameraInteractionEnabled(bool enabled)
-    {
-        GameManager manager = EnsureExists();
-        manager.mainCameraInteractionEnabled = enabled;
     }
 
     public static void RegisterBackgroundMusic(AudioSource audioSource)
@@ -128,12 +115,10 @@ public sealed class GameManager : MonoBehaviour
         manager.selectedStageIndex = Mathf.Clamp(stageIndex, FirstStageIndex, LastStageIndex);
     }
 
-    public static void StoreResult(float accuracy, string progressText)
+    private static void StoreResult(float accuracy)
     {
         GameManager manager = EnsureExists();
-        manager.hasSubmittedResult = true;
         manager.lastAccuracy = Mathf.Clamp(accuracy, 0f, 100f);
-        manager.lastProgressText = string.IsNullOrWhiteSpace(progressText) ? DefaultProgressText : progressText;
         UpdateBestAccuracy(manager.selectedStageIndex, manager.lastAccuracy);
     }
 
@@ -235,10 +220,7 @@ public sealed class GameManager : MonoBehaviour
     private void ResetSessionState()
     {
         isMuted = false;
-        mainCameraInteractionEnabled = true;
-        hasSubmittedResult = false;
         lastAccuracy = 0f;
-        lastProgressText = DefaultProgressText;
         selectedStageIndex = FirstStageIndex;
         backgroundMusicSource = null;
     }

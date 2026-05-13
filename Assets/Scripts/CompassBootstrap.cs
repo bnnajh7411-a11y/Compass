@@ -90,13 +90,11 @@ public class CompassBootstrap : MonoBehaviour
         runtimeRoot.transform.SetParent(transform, false);
 
         GameObject canvasObject = GetOrCreateCanvas();
-        if (GameManager.IsMainCameraInteractionEnabled)
-        {
-            CreateMainCameraInteractionOverlay(canvasObject.transform, mainCamera);
-        }
+        Transform canvasTransform = canvasObject.transform;
+        CreateMainCameraInteractionOverlay(canvasTransform, mainCamera);
 
         ScoreManager scoreManager = CreateScoreManager();
-        AccuracyGaugeView accuracyGauge = CreateAccuracyGauge(canvasObject.transform);
+        AccuracyGaugeView accuracyGauge = CreateAccuracyGauge(canvasTransform);
         scoreManager.BindAccuracyGauge(accuracyGauge);
 
         Rotate rotate = Object.FindFirstObjectByType<Rotate>();
@@ -134,7 +132,7 @@ public class CompassBootstrap : MonoBehaviour
             CreateGridBackdrop("[CompassGrid]", gridBounds, mainCamera.gameObject.layer);
             CreateGridBackdrop("[CompassPreviewGrid]", gridBounds, previewLayer);
             CreatePreviewCamera(previewLayer, bounds);
-            CreatePreviewPanel();
+            CreatePreviewPanel(canvasTransform);
         }
         else
         {
@@ -144,10 +142,10 @@ public class CompassBootstrap : MonoBehaviour
 
         if (rotate != null)
         {
-            RuntimeUiFactory.CreateCheckIconButton(canvasObject.transform, rotate.SubmitResultAndLoadScene);
+            RuntimeUiFactory.CreateCheckIconButton(canvasTransform, rotate.SubmitResultAndLoadScene);
         }
 
-        RuntimeUiFactory.CreateAudioToggleButton(canvasObject.transform);
+        RuntimeUiFactory.CreateAudioToggleButton(canvasTransform);
         scoreManager.Refresh();
     }
 
@@ -263,30 +261,6 @@ public class CompassBootstrap : MonoBehaviour
         return scoreObject.AddComponent<ScoreManager>();
     }
 
-    private Text CreateStatusText()
-    {
-        GameObject canvasObject = GetOrCreateCanvas();
-
-        GameObject scoreObject = new GameObject("AccuracyText");
-        scoreObject.transform.SetParent(canvasObject.transform, false);
-
-        Text text = scoreObject.AddComponent<Text>();
-        text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-        text.fontSize = 25;
-        text.alignment = TextAnchor.LowerLeft;
-        text.color = RuntimeUiTheme.TextColor;
-        text.text = "정확도 0% (0/0)";
-
-        RectTransform rectTransform = scoreObject.GetComponent<RectTransform>();
-        rectTransform.anchorMin = new Vector2(0.5f, 0f);
-        rectTransform.anchorMax = new Vector2(0.5f, 0f);
-        rectTransform.pivot = new Vector2(0.5f, 0f);
-        rectTransform.sizeDelta = new Vector2(300f, 28f);
-        rectTransform.anchoredPosition = new Vector2(-24f, 20f);
-
-        return text;
-    }
-
     private AccuracyGaugeView CreateAccuracyGauge(Transform parent)
     {
         const float borderThickness = 4f;
@@ -343,10 +317,10 @@ public class CompassBootstrap : MonoBehaviour
         return gauge;
     }
 
-    private void CreatePreviewPanel()
+    private void CreatePreviewPanel(Transform parent)
     {
         GameObject panelObject = new GameObject("PreviewPanel");
-        panelObject.transform.SetParent(GetOrCreateCanvas().transform, false);
+        panelObject.transform.SetParent(parent, false);
 
         Image background = panelObject.AddComponent<Image>();
         background.sprite = RuntimeSpriteFactory.GetRoundedRectSprite(300, 360, 36f);
@@ -370,7 +344,7 @@ public class CompassBootstrap : MonoBehaviour
         title.alignment = TextAnchor.UpperCenter;
         title.color = RuntimeUiTheme.TextColor;
         title.raycastTarget = false;
-        title.text = "<보기>";
+        title.text = "<蹂닿린>";
 
         RectTransform titleRect = titleObject.GetComponent<RectTransform>();
         titleRect.anchorMin = new Vector2(0f, 1f);

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 [DisallowMultipleComponent]
 public class ScoreManager : MonoBehaviour
@@ -11,7 +10,6 @@ public class ScoreManager : MonoBehaviour
     private const float CheckpointBonusWeight = 0.225f;
 
     private readonly List<Checkpoint> checkpoints = new List<Checkpoint>();
-    private Text statusText;
     private AccuracyGaugeView accuracyGauge;
     private SplineGuide guide;
     private float currentAccuracy;
@@ -41,12 +39,6 @@ public class ScoreManager : MonoBehaviour
     public static void ResetSingleton()
     {
         Instance = null;
-    }
-
-    public void BindStatusText(Text text)
-    {
-        statusText = text;
-        Refresh();
     }
 
     public void BindAccuracyGauge(AccuracyGaugeView gauge)
@@ -136,18 +128,8 @@ public class ScoreManager : MonoBehaviour
         return currentAccuracy;
     }
 
-    public string GetProgressText()
-    {
-        return $"Accuracy {currentAccuracy:0}% ({coveredGuideSamples}/{totalGuideSamples})";
-    }
-
     public void Refresh()
     {
-        if (statusText != null)
-        {
-            statusText.text = GetProgressText();
-        }
-
         if (accuracyGauge != null)
         {
             accuracyGauge.SetAccuracy(currentAccuracy);
