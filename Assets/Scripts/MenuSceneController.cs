@@ -34,7 +34,6 @@ public class MenuSceneController : MonoBehaviour
         int stageCount = GameManager.StageCount;
         if (stageCount <= 0)
         {
-            Debug.LogWarning("MenuSceneController: No stages are configured.");
             return;
         }
 
@@ -144,7 +143,7 @@ public class MenuSceneController : MonoBehaviour
         image.preserveAspect = true;
 
         Button button = buttonObject.AddComponent<Button>();
-        RuntimeUiFactory.ApplyThemeButton(button, image);
+        RuntimeUiFactory.ApplyThemeButton(button, image, RuntimeButtonSoundEffect.Stage);
         button.onClick.AddListener(() => SelectStageAndLoadMain(stageIndex));
 
         RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();

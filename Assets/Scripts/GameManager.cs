@@ -1,9 +1,26 @@
 using UnityEngine;
 
+public enum RuntimeButtonSoundEffect
+{
+    None,
+    ButtonTab,
+    MainControl,
+    DrawSE,
+    Start,
+    Stage,
+    Result,
+}
+
 [DisallowMultipleComponent]
 public sealed partial class GameManager : MonoBehaviour
 {
     private const string StageBestAccuracyKeyPrefix = "Compass.StageBestAccuracy.";
+    private const string AudioResourcesFolder = "Audio";
+    private const int MutedVolumePercent = 0;
+    private const int EnabledVolumePercent = 100;
+    private const float BackgroundMusicVolume = 1f;
+    private const float UiSoundVolumeScale = 1.35f;
+    private const float DrawSELoopVolume = 1f;
     public const int FirstStageIndex = 1;
     private static readonly string[] StageGuideNames =
     {
@@ -18,27 +35,28 @@ public sealed partial class GameManager : MonoBehaviour
     private static GameManager instance;
 
     private bool isInitialized;
-    private bool isMuted;
+    private int masterVolumePercent = EnabledVolumePercent;
     private float lastAccuracy;
     private int selectedStageIndex = FirstStageIndex;
     private AudioSource backgroundMusicSource;
+    private AudioSource soundEffectSource;
+    private AudioSource drawSELoopSource;
+    private AudioClip buttonTabSound;
+    private AudioClip mainControlSound;
+    private AudioClip drawSESound;
+    private AudioClip startSound;
+    private AudioClip stageSound;
+    private AudioClip resultSound;
 
     public static event System.Action<bool> MutedChanged;
 
-    public static GameManager Instance
-    {
-        get
-        {
-            return EnsureExists();
-        }
-    }
-
-    public static float LastAccuracy => Instance.lastAccuracy;
-    public static int SelectedStageIndex => Instance.selectedStageIndex;
+    public static float LastAccuracy => EnsureExists().lastAccuracy;
+    public static int SelectedStageIndex => EnsureExists().selectedStageIndex;
     public static int StageCount => StageGuideNames.Length;
     public static int LastStageIndex => StageCount;
     public static bool HasNextStage => SelectedStageIndex < LastStageIndex;
-    public static bool IsMuted => Instance.isMuted;
+    public static bool HasInstance => instance != null;
+    public static bool IsMuted => EnsureExists().masterVolumePercent == MutedVolumePercent;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Bootstrap()
@@ -52,21 +70,22 @@ public sealed partial class GameManager : MonoBehaviour
 
     public static void Toggle()
     {
-        SetMuted(!IsMuted);
+        SetMasterVolumePercent(IsMuted ? EnabledVolumePercent : MutedVolumePercent);
     }
 
-    public static void SetMuted(bool muted)
+    public static void SetMasterVolumePercent(int volumePercent)
     {
         GameManager manager = EnsureExists();
+        int normalizedVolumePercent = NormalizeVolumePercent(volumePercent);
 
-        if (manager.isMuted == muted)
+        if (manager.masterVolumePercent == normalizedVolumePercent)
         {
             return;
         }
 
-        manager.isMuted = muted;
+        manager.masterVolumePercent = normalizedVolumePercent;
         manager.ApplyVolume();
-        MutedChanged?.Invoke(manager.isMuted);
+        MutedChanged?.Invoke(manager.masterVolumePercent == MutedVolumePercent);
     }
 
     public static void RegisterBackgroundMusic(AudioSource audioSource)
@@ -91,6 +110,7 @@ public sealed partial class GameManager : MonoBehaviour
         }
 
         manager.backgroundMusicSource = audioSource;
+        manager.ConfigureBackgroundMusicSource(audioSource);
         Object.DontDestroyOnLoad(audioSource.gameObject);
         manager.ApplyVolume();
     }
@@ -115,6 +135,61 @@ public sealed partial class GameManager : MonoBehaviour
         manager.selectedStageIndex = Mathf.Clamp(stageIndex, FirstStageIndex, LastStageIndex);
     }
 
+    public static void RegisterDrawSEClip(AudioClip audioClip)
+    {
+        if (audioClip == null)
+        {
+            return;
+        }
+
+        GameManager manager = EnsureExists();
+        manager.drawSESound = audioClip;
+    }
+
+    public static void PlayUiSound(RuntimeButtonSoundEffect soundEffect)
+    {
+        GameManager manager = EnsureExists();
+        AudioClip clip = manager.GetUiSoundClip(soundEffect);
+        if (clip == null)
+        {
+            return;
+        }
+
+        manager.GetOrCreateSoundEffectSource().PlayOneShot(clip, UiSoundVolumeScale);
+    }
+
+    public static void SetDrawSESoundActive(bool isActive)
+    {
+        GameManager manager = EnsureExists();
+        AudioClip clip = manager.GetUiSoundClip(RuntimeButtonSoundEffect.DrawSE);
+        if (clip == null)
+        {
+            return;
+        }
+
+        AudioSource drawSESource = manager.GetOrCreateDrawSELoopSource();
+
+        if (isActive)
+        {
+            if (drawSESource.clip != clip)
+            {
+                drawSESource.clip = clip;
+            }
+
+            if (!drawSESource.isPlaying)
+            {
+                drawSESource.Play();
+            }
+
+            return;
+        }
+
+        if (drawSESource.isPlaying)
+        {
+            drawSESource.Stop();
+        }
+    }
+
     private static void StoreResult(float accuracy)
     {
         GameManager manager = EnsureExists();
@@ -125,16 +200,6 @@ public sealed partial class GameManager : MonoBehaviour
     public static int GetNextStageIndex()
     {
         return Mathf.Min(SelectedStageIndex + 1, LastStageIndex);
-    }
-
-    public static string GetStageLabel(int stageIndex)
-    {
-        return $"Stage {Mathf.Clamp(stageIndex, FirstStageIndex, LastStageIndex)}";
-    }
-
-    public static string GetCurrentStageLabel()
-    {
-        return GetStageLabel(SelectedStageIndex);
     }
 
     public static bool TryGetBestAccuracy(int stageIndex, out float bestAccuracy)
@@ -219,15 +284,112 @@ public sealed partial class GameManager : MonoBehaviour
 
     private void ResetSessionState()
     {
-        isMuted = false;
+        masterVolumePercent = EnabledVolumePercent;
         lastAccuracy = 0f;
         selectedStageIndex = FirstStageIndex;
         backgroundMusicSource = null;
+        ResetAudioSource(soundEffectSource, false);
+        ResetAudioSource(drawSELoopSource, true);
     }
 
     private void ApplyVolume()
     {
-        AudioListener.volume = isMuted ? 0f : 1f;
+        AudioListener.volume = Mathf.Clamp01(masterVolumePercent / (float)EnabledVolumePercent);
+    }
+
+    private AudioSource GetOrCreateSoundEffectSource()
+    {
+        if (soundEffectSource != null)
+        {
+            return soundEffectSource;
+        }
+
+        soundEffectSource = CreateUiAudioSource(false);
+        return soundEffectSource;
+    }
+
+    private AudioSource GetOrCreateDrawSELoopSource()
+    {
+        if (drawSELoopSource != null)
+        {
+            return drawSELoopSource;
+        }
+
+        drawSELoopSource = CreateUiAudioSource(true);
+        return drawSELoopSource;
+    }
+
+    private AudioSource CreateUiAudioSource(bool isLooping)
+    {
+        AudioSource audioSource = gameObject.AddComponent<AudioSource>();
+        audioSource.playOnAwake = false;
+        audioSource.loop = isLooping;
+        audioSource.spatialBlend = 0f;
+        audioSource.volume = isLooping ? DrawSELoopVolume : 1f;
+        return audioSource;
+    }
+
+    private void ConfigureBackgroundMusicSource(AudioSource audioSource)
+    {
+        audioSource.spatialBlend = 0f;
+        audioSource.volume = BackgroundMusicVolume;
+    }
+
+    private AudioClip GetUiSoundClip(RuntimeButtonSoundEffect soundEffect)
+    {
+        switch (soundEffect)
+        {
+            case RuntimeButtonSoundEffect.None:
+                return null;
+            case RuntimeButtonSoundEffect.Start:
+                return GetOrLoadUiSoundClip(ref startSound, "Start");
+            case RuntimeButtonSoundEffect.MainControl:
+                return GetOrLoadUiSoundClip(ref mainControlSound, "MainControl");
+            case RuntimeButtonSoundEffect.DrawSE:
+                return drawSESound;
+            case RuntimeButtonSoundEffect.Stage:
+                return GetOrLoadUiSoundClip(ref stageSound, "Stage");
+            case RuntimeButtonSoundEffect.Result:
+                return GetOrLoadUiSoundClip(ref resultSound, "Result");
+            default:
+                return GetOrLoadUiSoundClip(ref buttonTabSound, "ButtonTab");
+        }
+    }
+
+    private AudioClip GetOrLoadUiSoundClip(ref AudioClip clip, string clipName)
+    {
+        if (clip == null)
+        {
+            clip = LoadUiSoundClip(clipName);
+        }
+
+        return clip;
+    }
+
+    private static AudioClip LoadUiSoundClip(string clipName)
+    {
+        return Resources.Load<AudioClip>($"{AudioResourcesFolder}/{clipName}");
+    }
+
+    private static int NormalizeVolumePercent(int volumePercent)
+    {
+        return volumePercent <= MutedVolumePercent
+            ? MutedVolumePercent
+            : EnabledVolumePercent;
+    }
+
+    private static void ResetAudioSource(AudioSource audioSource, bool clearClip)
+    {
+        if (audioSource == null)
+        {
+            return;
+        }
+
+        audioSource.Stop();
+        if (clearClip)
+        {
+            audioSource.clip = null;
+        }
     }
 
     private static void UpdateBestAccuracy(int stageIndex, float accuracy)

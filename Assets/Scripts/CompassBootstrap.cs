@@ -65,16 +65,11 @@ public class CompassBootstrap : MonoBehaviour
         Camera mainCamera = Camera.main;
         if (mainCamera == null)
         {
-            Debug.LogWarning("CompassBootstrap: Main Camera was not found.");
             return;
         }
 
         int previewLayer = LayerMask.NameToLayer(PreviewLayerName);
-        if (previewLayer < 0)
-        {
-            Debug.LogWarning($"CompassBootstrap: Layer '{PreviewLayerName}' is missing.");
-        }
-        else
+        if (previewLayer >= 0)
         {
             mainCamera.cullingMask &= ~(1 << previewLayer);
         }
@@ -82,7 +77,6 @@ public class CompassBootstrap : MonoBehaviour
         SplineGuide guide = SelectStageGuide(GameManager.SelectedStageIndex, out SplineContainer splineContainer);
         if (guide == null || splineContainer == null)
         {
-            Debug.LogWarning("CompassBootstrap: No usable SplineGuide or SplineContainer was found.");
             return;
         }
 
@@ -101,11 +95,6 @@ public class CompassBootstrap : MonoBehaviour
         if (rotate != null)
         {
             rotate.EnsurePlayerBrushSetup();
-            if (rotate.target3 == null)
-            {
-                Debug.LogWarning("CompassBootstrap: Rotate.target3 is not assigned in the scene.");
-            }
-
             rotate.ApplyTargetPositions(
                 guide.Center1WorldPosition,
                 guide.Center2WorldPosition,
@@ -182,10 +171,6 @@ public class CompassBootstrap : MonoBehaviour
             if (selectedGuide == null)
             {
                 selectedGuide = firstAvailableGuide;
-                if (selectedGuide != null)
-                {
-                    Debug.LogWarning($"CompassBootstrap: Stage guide '{targetGuideName}' was not found. Falling back to '{selectedGuide.name}'.");
-                }
             }
 
             if (selectedGuide != null)
@@ -207,12 +192,8 @@ public class CompassBootstrap : MonoBehaviour
                 if (splineContainer != null)
                 {
                     selectedGuide.splineContainer = splineContainer;
-                    Debug.Log($"CompassBootstrap: Selected guide '{selectedGuide.name}' for stage {GameManager.GetCurrentStageLabel()}.");
-
                     return selectedGuide;
                 }
-
-                Debug.LogWarning($"CompassBootstrap: Selected guide '{selectedGuide.name}' does not have a SplineContainer.");
             }
         }
 

@@ -2390,6 +2390,7 @@ MonoBehaviour:
   target3: {fileID: 102051338}
   orbitSpeed: 50
   fixedRadius: 3
+  drawSEClip: {fileID: 8300000, guid: dc192e3ab58f09f45b869fd30fbce5d1, type: 3}
 --- !u!1 &2711336725
 GameObject:
   m_ObjectHideFlags: 0

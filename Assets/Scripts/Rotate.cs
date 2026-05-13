@@ -3,11 +3,16 @@ using UnityEngine;
 [RequireComponent(typeof(TrailRenderer))]
 public class Rotate : MonoBehaviour
 {
+    private const float RadiusStep = 0.5f;
+    private const float MinRadius = 1f;
+    private const float MaxRadius = 10f;
+
     public GameObject target1;
     public GameObject target2;
     public GameObject target3;
     public float orbitSpeed = 50.0f;
     public float fixedRadius = 3.0f;
+    [SerializeField] private AudioClip drawSEClip;
 
     private TrailRenderer trail;
     private Rigidbody2D body2D;
@@ -16,15 +21,16 @@ public class Rotate : MonoBehaviour
     private Vector3[] trailPositionsBuffer;
     private bool isTransitioning;
 
-    void Awake()
+    private void Awake()
     {
         trail = GetComponent<TrailRenderer>();
         body2D = GetComponent<Rigidbody2D>();
         brushCollider = GetComponent<CircleCollider2D>();
+        GameManager.RegisterDrawSEClip(drawSEClip);
         EnsurePlayerBrushSetup();
     }
 
-    void Start()
+    private void Start()
     {
         if (trail != null)
         {
@@ -35,7 +41,15 @@ public class Rotate : MonoBehaviour
         SetPositionByRadius(currentTarget);
     }
 
-    void Update()
+    private void OnDisable()
+    {
+        if (GameManager.HasInstance)
+        {
+            GameManager.SetDrawSESoundActive(false);
+        }
+    }
+
+    private void Update()
     {
         if (Input.GetKeyDown(KeyCode.R))
         {
@@ -50,47 +64,19 @@ public class Rotate : MonoBehaviour
             return;
         }
 
-        bool targetChanged = false;
-        if (Input.GetKeyDown(KeyCode.A))
+        bool shouldPlayMainControlSound = UpdateTargetSelection();
+        shouldPlayMainControlSound |= UpdateRadiusInput();
+
+        if (shouldPlayMainControlSound)
         {
-            StepTarget(-1);
-            targetChanged = true;
+            GameManager.PlayUiSound(RuntimeButtonSoundEffect.MainControl);
         }
 
-        if (Input.GetKeyDown(KeyCode.D))
-        {
-            StepTarget(1);
-            targetChanged = true;
-        }
-
-        if (targetChanged)
-        {
-            SetPositionByRadius(currentTarget);
-        }
-
-        if (Input.GetKeyDown(KeyCode.W))
-        {
-            fixedRadius += 0.5f;
-            if (fixedRadius > 10.0f) fixedRadius = 10.0f;
-            SetPositionByRadius(currentTarget);
-        }
-
-        if (Input.GetKeyDown(KeyCode.S))
-        {
-            fixedRadius -= 0.5f;
-            if (fixedRadius < 1.0f) fixedRadius = 1.0f;
-            SetPositionByRadius(currentTarget);
-        }
-
-        if (trail != null)
-        {
-            trail.emitting = Input.GetKey(KeyCode.Space);
-        }
-
+        UpdateDrawingState();
         EvaluateTrailAccuracy();
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
         if (currentTarget == null)
         {
@@ -106,6 +92,77 @@ public class Rotate : MonoBehaviour
 
         Vector2 rotatedDirection = (Vector2)(Quaternion.Euler(0f, 0f, orbitSpeed * Time.fixedDeltaTime) * offset.normalized);
         MoveBrushTo(center + (rotatedDirection * fixedRadius));
+    }
+
+    private bool UpdateTargetSelection()
+    {
+        bool targetChanged = false;
+
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            targetChanged |= TryStepTarget(-1);
+        }
+
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            targetChanged |= TryStepTarget(1);
+        }
+
+        if (targetChanged)
+        {
+            SetPositionByRadius(currentTarget);
+        }
+
+        return targetChanged;
+    }
+
+    private bool UpdateRadiusInput()
+    {
+        bool radiusChanged = false;
+
+        if (Input.GetKeyDown(KeyCode.W))
+        {
+            radiusChanged |= TryAdjustRadius(RadiusStep);
+        }
+
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            radiusChanged |= TryAdjustRadius(-RadiusStep);
+        }
+
+        return radiusChanged;
+    }
+
+    private void UpdateDrawingState()
+    {
+        bool isDrawing = Input.GetKey(KeyCode.Space);
+
+        if (trail != null)
+        {
+            trail.emitting = isDrawing;
+        }
+
+        GameManager.SetDrawSESoundActive(isDrawing);
+    }
+
+    private bool TryStepTarget(int direction)
+    {
+        Transform previousTarget = currentTarget;
+        StepTarget(direction);
+        return currentTarget != previousTarget;
+    }
+
+    private bool TryAdjustRadius(float delta)
+    {
+        float nextRadius = Mathf.Clamp(fixedRadius + delta, MinRadius, MaxRadius);
+        if (Mathf.Approximately(nextRadius, fixedRadius))
+        {
+            return false;
+        }
+
+        fixedRadius = nextRadius;
+        SetPositionByRadius(currentTarget);
+        return true;
     }
 
     public void EnsurePlayerBrushSetup()
@@ -280,7 +337,7 @@ public class Rotate : MonoBehaviour
         SetPositionByRadius(currentTarget);
     }
 
-    void SetPositionByRadius(Transform newTarget)
+    private void SetPositionByRadius(Transform newTarget)
     {
         if (newTarget == null)
         {
@@ -361,6 +418,7 @@ public class Rotate : MonoBehaviour
         }
 
         isTransitioning = true;
+        GameManager.SetDrawSESoundActive(false);
 
         float accuracy = 0f;
 

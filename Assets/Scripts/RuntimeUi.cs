@@ -126,7 +126,8 @@ public static class RuntimeUiFactory
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
             new Vector2(0f, 1f),
-            false);
+            false,
+            soundEffect: RuntimeButtonSoundEffect.None);
 
         button.gameObject.AddComponent<RuntimeAudioToggleButton>();
         return button;
@@ -134,7 +135,7 @@ public static class RuntimeUiFactory
 
     public static Button CreateCheckIconButton(Transform parent, UnityAction onClick)
     {
-        return CreateIconButton(
+        Button button = CreateIconButton(
             parent,
             "CheckButton",
             GetCheckIconSprite(),
@@ -145,7 +146,9 @@ public static class RuntimeUiFactory
             new Vector2(1f, 0f),
             new Vector2(1f, 0f),
             true,
-            onClick);
+            onClick,
+            RuntimeButtonSoundEffect.Result);
+        return button;
     }
 
     public static Text CreateText(
@@ -186,7 +189,10 @@ public static class RuntimeUiFactory
         return text;
     }
 
-    public static void ApplyThemeButton(Button button, Graphic targetGraphic)
+    public static void ApplyThemeButton(
+        Button button,
+        Graphic targetGraphic,
+        RuntimeButtonSoundEffect soundEffect = RuntimeButtonSoundEffect.ButtonTab)
     {
         button.transition = Selectable.Transition.ColorTint;
         button.targetGraphic = targetGraphic;
@@ -198,6 +204,26 @@ public static class RuntimeUiFactory
         colors.selectedColor = RuntimeUiTheme.ButtonHoverColor;
         colors.disabledColor = RuntimeUiTheme.ButtonDisabledColor;
         button.colors = colors;
+        ConfigureButtonSound(button, soundEffect);
+    }
+
+    public static RuntimeButtonSound ConfigureButtonSound(
+        Button button,
+        RuntimeButtonSoundEffect soundEffect = RuntimeButtonSoundEffect.ButtonTab)
+    {
+        if (button == null)
+        {
+            return null;
+        }
+
+        RuntimeButtonSound buttonSound = button.GetComponent<RuntimeButtonSound>();
+        if (buttonSound == null)
+        {
+            buttonSound = button.gameObject.AddComponent<RuntimeButtonSound>();
+        }
+
+        buttonSound.Configure(soundEffect);
+        return buttonSound;
     }
 
     public static void Stretch(RectTransform rectTransform)
@@ -219,7 +245,8 @@ public static class RuntimeUiFactory
         Vector2 anchorMax,
         Vector2 pivot,
         bool useThemeButton,
-        UnityAction onClick = null)
+        UnityAction onClick = null,
+        RuntimeButtonSoundEffect soundEffect = RuntimeButtonSoundEffect.ButtonTab)
     {
         GameObject buttonObject = new GameObject(objectName);
         buttonObject.transform.SetParent(parent, false);
@@ -232,12 +259,13 @@ public static class RuntimeUiFactory
         Button button = buttonObject.AddComponent<Button>();
         if (useThemeButton)
         {
-            ApplyThemeButton(button, image);
+            ApplyThemeButton(button, image, soundEffect);
         }
         else
         {
             button.transition = Selectable.Transition.None;
             button.targetGraphic = image;
+            ConfigureButtonSound(button, soundEffect);
         }
 
         if (onClick != null)
@@ -290,7 +318,6 @@ public static class RuntimeUiFactory
             return audioIconSprite;
         }
 
-        Debug.LogWarning("RuntimeUiFactory: Audio icon sprite was not found in Resources/AudioIcon.");
         audioIconSprite = RuntimeSpriteFactory.GetWhiteSprite();
         return audioIconSprite;
     }
@@ -319,9 +346,51 @@ public static class RuntimeUiFactory
             return checkIconSprite;
         }
 
-        Debug.LogWarning("RuntimeUiFactory: Check icon sprite was not found in Resources/CheckIcon.");
         checkIconSprite = RuntimeSpriteFactory.GetWhiteSprite();
         return checkIconSprite;
+    }
+}
+
+[DisallowMultipleComponent]
+public sealed class RuntimeButtonSound : MonoBehaviour
+{
+    private Button button;
+    private RuntimeButtonSoundEffect soundEffect = RuntimeButtonSoundEffect.ButtonTab;
+
+    public void Configure(RuntimeButtonSoundEffect configuredSoundEffect)
+    {
+        soundEffect = configuredSoundEffect;
+    }
+
+    private void Awake()
+    {
+        button = GetComponent<Button>();
+    }
+
+    private void OnEnable()
+    {
+        if (button != null)
+        {
+            button.onClick.AddListener(PlaySound);
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (button != null)
+        {
+            button.onClick.RemoveListener(PlaySound);
+        }
+    }
+
+    private void PlaySound()
+    {
+        if (soundEffect == RuntimeButtonSoundEffect.None)
+        {
+            return;
+        }
+
+        GameManager.PlayUiSound(soundEffect);
     }
 }
 

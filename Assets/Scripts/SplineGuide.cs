@@ -90,7 +90,6 @@ public class SplineGuide : MonoBehaviour
     {
         if (splineContainer == null)
         {
-            Debug.LogWarning($"{name}: SplineContainer is missing.", this);
             return;
         }
 
@@ -111,7 +110,6 @@ public class SplineGuide : MonoBehaviour
 
         if (!TryGetUsableSplines(out IReadOnlyList<Spline> splines))
         {
-            Debug.LogWarning($"{name}: No usable splines were found in the SplineContainer.", this);
             hasBuilt = true;
             ScoreManager.Instance?.Refresh();
             return;

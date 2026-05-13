@@ -64,7 +64,6 @@ public class StartSceneController : MonoBehaviour
     {
         if (titleSprite == null)
         {
-            Debug.LogWarning("StartSceneController: Title sprite is not assigned.");
             return null;
         }
 
@@ -91,7 +90,6 @@ public class StartSceneController : MonoBehaviour
     {
         if (startButtonSprite == null)
         {
-            Debug.LogWarning("StartSceneController: Start button sprite is not assigned.");
             return;
         }
 
@@ -104,7 +102,7 @@ public class StartSceneController : MonoBehaviour
         image.preserveAspect = true;
 
         Button button = buttonObject.AddComponent<Button>();
-        RuntimeUiFactory.ApplyThemeButton(button, image);
+        RuntimeUiFactory.ApplyThemeButton(button, image, RuntimeButtonSoundEffect.Start);
         button.onClick.AddListener(LoadMenuScene);
 
         RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
