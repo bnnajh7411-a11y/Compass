@@ -20,6 +20,7 @@ public sealed class GameManager : MonoBehaviour
 
     private bool isInitialized;
     private bool isMuted;
+    private bool mainCameraInteractionEnabled = true;
     private bool hasSubmittedResult;
     private float lastAccuracy;
     private string lastProgressText = DefaultProgressText;
@@ -39,6 +40,7 @@ public sealed class GameManager : MonoBehaviour
     public static bool HasSubmittedResult => Instance.hasSubmittedResult;
     public static float LastAccuracy => Instance.lastAccuracy;
     public static string LastProgressText => Instance.lastProgressText;
+    public static bool IsMainCameraInteractionEnabled => Instance.mainCameraInteractionEnabled;
     public static int SelectedStageIndex => Instance.selectedStageIndex;
     public static int StageCount => StageGuideNames.Length;
     public static int LastStageIndex => StageCount;
@@ -72,6 +74,12 @@ public sealed class GameManager : MonoBehaviour
         manager.isMuted = muted;
         manager.ApplyVolume();
         MutedChanged?.Invoke(manager.isMuted);
+    }
+
+    public static void SetMainCameraInteractionEnabled(bool enabled)
+    {
+        GameManager manager = EnsureExists();
+        manager.mainCameraInteractionEnabled = enabled;
     }
 
     public static void RegisterBackgroundMusic(AudioSource audioSource)
@@ -227,6 +235,7 @@ public sealed class GameManager : MonoBehaviour
     private void ResetSessionState()
     {
         isMuted = false;
+        mainCameraInteractionEnabled = true;
         hasSubmittedResult = false;
         lastAccuracy = 0f;
         lastProgressText = DefaultProgressText;

@@ -87,6 +87,12 @@ public class CompassBootstrap : MonoBehaviour
         runtimeRoot = new GameObject("[CompassRuntime]");
         runtimeRoot.transform.SetParent(transform, false);
 
+        GameObject canvasObject = GetOrCreateCanvas();
+        if (GameManager.IsMainCameraInteractionEnabled)
+        {
+            CreateMainCameraInteractionOverlay(canvasObject.transform, mainCamera);
+        }
+
         ScoreManager scoreManager = CreateScoreManager();
         Text statusText = CreateStatusText();
         scoreManager.BindStatusText(statusText);
@@ -134,7 +140,6 @@ public class CompassBootstrap : MonoBehaviour
             CreateGridBackdrop("[CompassGrid]", gridBounds, mainCamera.gameObject.layer);
         }
 
-        GameObject canvasObject = GetOrCreateCanvas();
         if (rotate != null)
         {
             RuntimeUiFactory.CreateCheckIconButton(canvasObject.transform, rotate.SubmitResultAndLoadScene);
@@ -347,6 +352,29 @@ public class CompassBootstrap : MonoBehaviour
         interactor.Configure(panelRect, previewRect, previewCamera);
 
         CreatePreviewScaleButtons(panelObject.transform, interactor, new Vector2(50f, 28f));
+    }
+
+    private void CreateMainCameraInteractionOverlay(Transform parent, Camera mainCamera)
+    {
+        if (mainCamera == null)
+        {
+            return;
+        }
+
+        GameObject overlayObject = new GameObject("MainCameraInteractionOverlay");
+        overlayObject.transform.SetParent(parent, false);
+        overlayObject.transform.SetAsFirstSibling();
+
+        Image overlay = overlayObject.AddComponent<Image>();
+        overlay.sprite = RuntimeSpriteFactory.GetWhiteSprite();
+        overlay.color = new Color(1f, 1f, 1f, 0f);
+        overlay.raycastTarget = true;
+
+        RectTransform overlayRect = overlayObject.GetComponent<RectTransform>();
+        RuntimeUiFactory.Stretch(overlayRect);
+
+        CompassPreviewInteractor interactor = overlayObject.AddComponent<CompassPreviewInteractor>();
+        interactor.Configure(null, overlayRect, mainCamera, false);
     }
 
     private void CreatePreviewScaleButtons(Transform parent, CompassPreviewInteractor interactor, Vector2 anchoredPosition)

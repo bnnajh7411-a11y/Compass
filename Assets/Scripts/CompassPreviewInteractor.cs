@@ -19,6 +19,7 @@ public class CompassPreviewInteractor : MonoBehaviour,
     private RectTransform panelRect;
     private RectTransform previewRect;
     private Camera previewCamera;
+    private bool shouldRenderCamera = true;
 
     private Vector2 compactPanelSize;
     private Vector2 compactPreviewSize;
@@ -45,11 +46,12 @@ public class CompassPreviewInteractor : MonoBehaviour,
         }
     }
 
-    public void Configure(RectTransform panelRect, RectTransform previewRect, Camera previewCamera)
+    public void Configure(RectTransform panelRect, RectTransform previewRect, Camera previewCamera, bool shouldRenderCamera = true)
     {
         this.panelRect = panelRect;
         this.previewRect = previewRect;
         this.previewCamera = previewCamera;
+        this.shouldRenderCamera = shouldRenderCamera;
 
         compactPanelSize = panelRect != null ? panelRect.sizeDelta : new Vector2(300f, 360f);
         compactPreviewSize = previewRect != null ? previewRect.sizeDelta : new Vector2(256f, 256f);
@@ -158,7 +160,7 @@ public class CompassPreviewInteractor : MonoBehaviour,
         cameraPosition.x -= (delta.x / Mathf.Max(size.x, 1f)) * 2f * dragStartOrthographicSize * aspect;
         cameraPosition.y -= (delta.y / Mathf.Max(size.y, 1f)) * 2f * dragStartOrthographicSize;
         previewCamera.transform.position = cameraPosition;
-        previewCamera.Render();
+        RenderCameraIfNeeded();
     }
 
     public void OnEndDrag(PointerEventData eventData)
@@ -169,7 +171,10 @@ public class CompassPreviewInteractor : MonoBehaviour,
     private void ResetView()
     {
         isDragging = false;
-        CollapsePreviewArea();
+        if (panelRect != null)
+        {
+            CollapsePreviewArea();
+        }
 
         ResetCameraState();
     }
@@ -238,7 +243,7 @@ public class CompassPreviewInteractor : MonoBehaviour,
         previewCamera.transform.position = baseCameraPosition;
         previewCamera.transform.rotation = baseCameraRotation;
         previewCamera.orthographicSize = baseOrthographicSize;
-        previewCamera.Render();
+        RenderCameraIfNeeded();
     }
 
     private bool IsOverPreview(PointerEventData eventData)
@@ -307,6 +312,16 @@ public class CompassPreviewInteractor : MonoBehaviour,
         }
 
         previewCamera.orthographicSize = newSize;
+        RenderCameraIfNeeded();
+    }
+
+    private void RenderCameraIfNeeded()
+    {
+        if (!shouldRenderCamera || previewCamera == null)
+        {
+            return;
+        }
+
         previewCamera.Render();
     }
 }
