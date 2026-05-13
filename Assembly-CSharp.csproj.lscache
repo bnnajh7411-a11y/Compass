@@ -57,6 +57,7 @@ Assets/Scripts/
  CompassGameState.cs
  CompassPreviewInteractor.cs
  ConnectedLine.cs
+ GameManager.cs
  GridBackdropRenderer.cs
  MenuSceneController.cs
  ResultSceneController.cs

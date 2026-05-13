@@ -366,7 +366,7 @@ public class Rotate : MonoBehaviour
             progressText = ScoreManager.Instance.GetProgressText();
         }
 
-        CompassGameState.StoreResult(accuracy, progressText);
+        GameManager.StoreResult(accuracy, progressText);
         SceneManager.LoadScene(ResultSceneName);
     }
 

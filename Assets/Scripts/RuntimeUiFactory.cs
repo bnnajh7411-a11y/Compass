@@ -106,7 +106,7 @@ public static class RuntimeUiFactory
 
         Image image = buttonObject.AddComponent<Image>();
         image.sprite = GetAudioIconSprite();
-        image.color = RuntimeAudioState.IsMuted ? new Color(1f, 1f, 1f, 0.45f) : Color.white;
+        image.color = GameManager.IsMuted ? new Color(1f, 1f, 1f, 0.45f) : Color.white;
         image.preserveAspect = true;
 
         Button button = buttonObject.AddComponent<Button>();

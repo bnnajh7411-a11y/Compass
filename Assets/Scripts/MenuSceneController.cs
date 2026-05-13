@@ -18,6 +18,7 @@ public class MenuSceneController : MonoBehaviour
     private static readonly Vector2 StageBestTextPosition = new Vector2(0f, -38f);
     private static readonly Vector2 ControlsTextSize = new Vector2(270f, 170f);
     private static readonly Vector2 ControlsTextPosition = new Vector2(-28f, -28f);
+    private static readonly Vector2 ControlsBackgroundSize = new Vector2(320f, 204f);
     private const int StageBestFontSize = 18;
     private const int ControlsFontSize = 20;
 
@@ -32,7 +33,7 @@ public class MenuSceneController : MonoBehaviour
 
     private void BuildUi()
     {
-        int stageCount = CompassGameState.StageCount;
+        int stageCount = GameManager.StageCount;
         if (stageCount <= 0)
         {
             Debug.LogWarning("MenuSceneController: No stages are configured.");
@@ -44,6 +45,18 @@ public class MenuSceneController : MonoBehaviour
         RuntimeUiFactory.Stretch(background.rectTransform);
 
         RectTransform card = CreateCard(background.transform);
+
+        Image controlsBackground = RuntimeUiFactory.CreateCardImage(
+            canvas.transform,
+            "ControlsBackground",
+            CardColor,
+            ControlsBackgroundSize);
+        RectTransform controlsBackgroundRect = controlsBackground.rectTransform;
+        controlsBackgroundRect.anchorMin = new Vector2(1f, 1f);
+        controlsBackgroundRect.anchorMax = new Vector2(1f, 1f);
+        controlsBackgroundRect.pivot = new Vector2(1f, 1f);
+        controlsBackgroundRect.sizeDelta = ControlsBackgroundSize;
+        controlsBackgroundRect.anchoredPosition = ControlsTextPosition;
 
         RuntimeUiFactory.CreateText(
             card,
@@ -60,18 +73,18 @@ public class MenuSceneController : MonoBehaviour
             new Vector2(0f, -18f));
 
         Text controlsText = RuntimeUiFactory.CreateText(
-            canvas.transform,
+            controlsBackground.transform,
             "Controls",
             "<조작 방법>\nA/D  중심 교체\nW/S  길이 조절\nR  그림 초기화\nSpace  그리기\nEnter  결과 보기",
             ControlsFontSize,
             FontStyle.Bold,
-            TextAnchor.UpperLeft,
+            TextAnchor.MiddleCenter,
             RuntimeUiTheme.TextColor,
+            new Vector2(0f, 0f),
             new Vector2(1f, 1f),
-            new Vector2(1f, 1f),
-            new Vector2(1f, 1f),
-            ControlsTextSize,
-            ControlsTextPosition);
+            new Vector2(0.5f, 0.5f),
+            new Vector2(-24f, -24f),
+            new Vector2(0f, ControlsBackgroundSize.y * 0.05f));
         controlsText.supportRichText = false;
 
         CreateStageButtons(card, stageCount);
@@ -86,7 +99,7 @@ public class MenuSceneController : MonoBehaviour
         }
 
         isTransitioning = true;
-        CompassGameState.SelectStage(stageIndex);
+        GameManager.SelectStage(stageIndex);
         SceneManager.LoadScene(MainSceneName);
     }
 
@@ -161,7 +174,7 @@ public class MenuSceneController : MonoBehaviour
         RuntimeUiFactory.CreateText(
             buttonObject.transform,
             "Best",
-            CompassGameState.GetBestAccuracyText(stageIndex),
+            GameManager.GetBestAccuracyText(stageIndex),
             StageBestFontSize,
             FontStyle.Bold,
             TextAnchor.MiddleCenter,

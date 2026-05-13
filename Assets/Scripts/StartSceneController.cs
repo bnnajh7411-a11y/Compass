@@ -49,7 +49,7 @@ public class StartSceneController : MonoBehaviour
         }
 
         isTransitioning = true;
-        CompassGameState.SelectStage(CompassGameState.FirstStageIndex);
+        GameManager.SelectStage(GameManager.FirstStageIndex);
         SceneManager.LoadScene(MenuSceneName);
     }
 

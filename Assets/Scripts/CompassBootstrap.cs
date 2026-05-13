@@ -77,7 +77,7 @@ public class CompassBootstrap : MonoBehaviour
             mainCamera.cullingMask &= ~(1 << previewLayer);
         }
 
-        SplineGuide guide = SelectStageGuide(CompassGameState.SelectedStageIndex, out SplineContainer splineContainer);
+        SplineGuide guide = SelectStageGuide(GameManager.SelectedStageIndex, out SplineContainer splineContainer);
         if (guide == null || splineContainer == null)
         {
             Debug.LogWarning("CompassBootstrap: No usable SplineGuide or SplineContainer was found.");
@@ -145,7 +145,7 @@ public class CompassBootstrap : MonoBehaviour
         SplineGuide[] guides = Object.FindObjectsByType<SplineGuide>(FindObjectsInactive.Include, FindObjectsSortMode.None);
         if (guides != null && guides.Length > 0)
         {
-            string targetGuideName = CompassGameState.GetStageGuideName(stageIndex);
+            string targetGuideName = GameManager.GetStageGuideName(stageIndex);
             SplineGuide selectedGuide = null;
             SplineGuide firstAvailableGuide = null;
 
@@ -196,7 +196,7 @@ public class CompassBootstrap : MonoBehaviour
                 if (splineContainer != null)
                 {
                     selectedGuide.splineContainer = splineContainer;
-                    Debug.Log($"CompassBootstrap: Selected guide '{selectedGuide.name}' for stage {CompassGameState.GetCurrentStageLabel()}.");
+                    Debug.Log($"CompassBootstrap: Selected guide '{selectedGuide.name}' for stage {GameManager.GetCurrentStageLabel()}.");
 
                     return selectedGuide;
                 }

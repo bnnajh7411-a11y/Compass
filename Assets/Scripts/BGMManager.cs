@@ -1,19 +1,18 @@
 using UnityEngine;
 
-public class BGMManager : MonoBehaviour
+[DisallowMultipleComponent]
+public sealed class BGMManager : MonoBehaviour
 {
-    private static BGMManager instance;
+    private AudioSource audioSource;
 
-    void Awake()
+    private void Awake()
     {
-        if (instance == null)
-        {
-            instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        audioSource = GetComponent<AudioSource>();
+        GameManager.RegisterBackgroundMusic(audioSource);
+    }
+
+    private void OnDestroy()
+    {
+        GameManager.UnregisterBackgroundMusic(audioSource);
     }
 }

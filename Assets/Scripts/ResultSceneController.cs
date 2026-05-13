@@ -56,7 +56,7 @@ public class ResultSceneController : MonoBehaviour
             new Vector2(-IconButtonSpacing, 56f),
             LoadCurrentStageScene);
 
-        if (CompassGameState.HasNextStage)
+        if (GameManager.HasNextStage)
         {
             CreateActionButton(
                 card,
@@ -91,7 +91,7 @@ public class ResultSceneController : MonoBehaviour
     {
         if (accuracyText != null)
         {
-            accuracyText.text = $"{CompassGameState.LastAccuracy:0}%";
+            accuracyText.text = $"{GameManager.LastAccuracy:0}%";
         }
     }
 
@@ -113,10 +113,10 @@ public class ResultSceneController : MonoBehaviour
             return;
         }
 
-        if (CompassGameState.HasNextStage)
+        if (GameManager.HasNextStage)
         {
             isTransitioning = true;
-            CompassGameState.SelectStage(CompassGameState.GetNextStageIndex());
+            GameManager.SelectStage(GameManager.GetNextStageIndex());
             SceneManager.LoadScene(MainSceneName);
             return;
         }

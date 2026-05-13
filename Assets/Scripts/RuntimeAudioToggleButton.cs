@@ -30,7 +30,7 @@ public sealed class RuntimeAudioToggleButton : MonoBehaviour
             button.onClick.AddListener(HandleClick);
         }
 
-        RuntimeAudioState.MutedChanged += HandleMutedChanged;
+        GameManager.MutedChanged += HandleMutedChanged;
         Refresh();
     }
 
@@ -41,12 +41,12 @@ public sealed class RuntimeAudioToggleButton : MonoBehaviour
             button.onClick.RemoveListener(HandleClick);
         }
 
-        RuntimeAudioState.MutedChanged -= HandleMutedChanged;
+        GameManager.MutedChanged -= HandleMutedChanged;
     }
 
     private void HandleClick()
     {
-        RuntimeAudioState.Toggle();
+        GameManager.Toggle();
     }
 
     private void HandleMutedChanged(bool isMuted)
@@ -61,6 +61,6 @@ public sealed class RuntimeAudioToggleButton : MonoBehaviour
             return;
         }
 
-        iconImage.color = RuntimeAudioState.IsMuted ? MutedColor : EnabledColor;
+        iconImage.color = GameManager.IsMuted ? MutedColor : EnabledColor;
     }
 }
