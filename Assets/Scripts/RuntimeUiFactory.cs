@@ -1,16 +1,21 @@
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public static class RuntimeUiFactory
 {
     private const string AudioIconResourcesPath = "AudioIcon";
-    private const float AudioButtonSize = 56f;
+    private const string CheckIconResourcesPath = "CheckIcon";
+    private const float AudioButtonSize = 56f * 1.15f;
     private const float AudioButtonMargin = 24f;
+    private const float CheckButtonSize = 112f * 1.15f;
+    private const float CheckButtonMargin = 24f;
     private const float CardCornerRadius = 36f;
 
     private static Font defaultFont;
     private static Sprite audioIconSprite;
+    private static Sprite checkIconSprite;
 
     public static void EnsureEventSystem()
     {
@@ -118,9 +123,37 @@ public static class RuntimeUiFactory
         rectTransform.anchorMax = new Vector2(0f, 1f);
         rectTransform.pivot = new Vector2(0f, 1f);
         rectTransform.sizeDelta = new Vector2(AudioButtonSize, AudioButtonSize);
-        rectTransform.anchoredPosition = new Vector2(AudioButtonMargin, -AudioButtonMargin);
+        rectTransform.anchoredPosition = new Vector2(AudioButtonMargin * 1.8f, -AudioButtonMargin * 1.5f);
 
         buttonObject.AddComponent<RuntimeAudioToggleButton>();
+        buttonObject.transform.SetAsLastSibling();
+        return button;
+    }
+
+    public static Button CreateCheckIconButton(Transform parent, UnityAction onClick)
+    {
+        GameObject buttonObject = new GameObject("CheckButton");
+        buttonObject.transform.SetParent(parent, false);
+
+        Image image = buttonObject.AddComponent<Image>();
+        image.sprite = GetCheckIconSprite();
+        image.color = RuntimeUiTheme.ButtonNormalColor;
+        image.preserveAspect = true;
+
+        Button button = buttonObject.AddComponent<Button>();
+        ApplyThemeButton(button, image);
+        if (onClick != null)
+        {
+            button.onClick.AddListener(onClick);
+        }
+
+        RectTransform rectTransform = buttonObject.GetComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(1f, 0f);
+        rectTransform.anchorMax = new Vector2(1f, 0f);
+        rectTransform.pivot = new Vector2(1f, 0f);
+        rectTransform.sizeDelta = new Vector2(CheckButtonSize, CheckButtonSize);
+        rectTransform.anchoredPosition = new Vector2(-CheckButtonMargin * 1.8f, CheckButtonMargin * 1.5f);
+
         buttonObject.transform.SetAsLastSibling();
         return button;
     }
@@ -222,5 +255,34 @@ public static class RuntimeUiFactory
         Debug.LogWarning("RuntimeUiFactory: Audio icon sprite was not found in Resources/AudioIcon.");
         audioIconSprite = RuntimeSpriteFactory.GetWhiteSprite();
         return audioIconSprite;
+    }
+
+    private static Sprite GetCheckIconSprite()
+    {
+        if (checkIconSprite != null)
+        {
+            return checkIconSprite;
+        }
+
+        Sprite[] sprites = Resources.LoadAll<Sprite>(CheckIconResourcesPath);
+        for (int i = 0; i < sprites.Length; i++)
+        {
+            Sprite sprite = sprites[i];
+            if (sprite != null && sprite.name.IndexOf("CheckIcon", System.StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                checkIconSprite = sprite;
+                return checkIconSprite;
+            }
+        }
+
+        if (sprites.Length > 0)
+        {
+            checkIconSprite = sprites[0];
+            return checkIconSprite;
+        }
+
+        Debug.LogWarning("RuntimeUiFactory: Check icon sprite was not found in Resources/CheckIcon.");
+        checkIconSprite = RuntimeSpriteFactory.GetWhiteSprite();
+        return checkIconSprite;
     }
 }

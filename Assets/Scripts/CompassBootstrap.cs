@@ -134,7 +134,13 @@ public class CompassBootstrap : MonoBehaviour
             CreateGridBackdrop("[CompassGrid]", gridBounds, mainCamera.gameObject.layer);
         }
 
-        RuntimeUiFactory.CreateAudioToggleButton(GetOrCreateCanvas().transform);
+        GameObject canvasObject = GetOrCreateCanvas();
+        if (rotate != null)
+        {
+            RuntimeUiFactory.CreateCheckIconButton(canvasObject.transform, rotate.SubmitResultAndLoadScene);
+        }
+
+        RuntimeUiFactory.CreateAudioToggleButton(canvasObject.transform);
         scoreManager.Refresh();
     }
 

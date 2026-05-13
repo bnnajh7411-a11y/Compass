@@ -17,6 +17,7 @@ public class Rotate : MonoBehaviour
     private CircleCollider2D brushCollider;
     private Transform currentTarget;
     private Vector3[] trailPositionsBuffer;
+    private bool isTransitioning;
 
     void Awake()
     {
@@ -355,8 +356,15 @@ public class Rotate : MonoBehaviour
         ScoreManager.Instance.EvaluateTrail(trailPositionsBuffer, copiedPositions);
     }
 
-    private void SubmitResultAndLoadScene()
+    public void SubmitResultAndLoadScene()
     {
+        if (isTransitioning)
+        {
+            return;
+        }
+
+        isTransitioning = true;
+
         float accuracy = 0f;
         string progressText = "Accuracy 0% (0/0) | Line 0%";
 
