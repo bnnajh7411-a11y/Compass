@@ -12,6 +12,7 @@ public class ScoreManager : MonoBehaviour
 
     private readonly List<Checkpoint> checkpoints = new List<Checkpoint>();
     private Text statusText;
+    private AccuracyGaugeView accuracyGauge;
     private SplineGuide guide;
     private float currentAccuracy;
     private float currentTrailPrecision;
@@ -45,6 +46,12 @@ public class ScoreManager : MonoBehaviour
     public void BindStatusText(Text text)
     {
         statusText = text;
+        Refresh();
+    }
+
+    public void BindAccuracyGauge(AccuracyGaugeView gauge)
+    {
+        accuracyGauge = gauge;
         Refresh();
     }
 
@@ -139,6 +146,11 @@ public class ScoreManager : MonoBehaviour
         if (statusText != null)
         {
             statusText.text = GetProgressText();
+        }
+
+        if (accuracyGauge != null)
+        {
+            accuracyGauge.SetAccuracy(currentAccuracy);
         }
     }
 

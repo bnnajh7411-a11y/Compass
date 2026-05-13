@@ -12,6 +12,8 @@ public class CompassBootstrap : MonoBehaviour
     private const int GridSortingOrder = -100;
     private const string MainSceneName = "Main";
     private const string PreviewLayerName = "CompassPreview";
+    private static readonly Vector2 AccuracyGaugeSize = new Vector2(560f, 30f);
+    private static readonly Vector2 AccuracyGaugePosition = new Vector2(0f, 24f);
     private static readonly Color GridColor = new Color(0.7f, 0.7f, 0.7f, 0.5f);
 
     private static CompassBootstrap instance;
@@ -94,8 +96,8 @@ public class CompassBootstrap : MonoBehaviour
         }
 
         ScoreManager scoreManager = CreateScoreManager();
-        Text statusText = CreateStatusText();
-        scoreManager.BindStatusText(statusText);
+        AccuracyGaugeView accuracyGauge = CreateAccuracyGauge(canvasObject.transform);
+        scoreManager.BindAccuracyGauge(accuracyGauge);
 
         Rotate rotate = Object.FindFirstObjectByType<Rotate>();
         if (rotate != null)
@@ -283,6 +285,62 @@ public class CompassBootstrap : MonoBehaviour
         rectTransform.anchoredPosition = new Vector2(-24f, 20f);
 
         return text;
+    }
+
+    private AccuracyGaugeView CreateAccuracyGauge(Transform parent)
+    {
+        const float borderThickness = 4f;
+
+        Image background = RuntimeUiFactory.CreateCardImage(
+            parent,
+            "AccuracyGauge",
+            Color.white,
+            AccuracyGaugeSize);
+        background.raycastTarget = false;
+
+        RectTransform backgroundRect = background.rectTransform;
+        backgroundRect.anchorMin = new Vector2(0.5f, 0f);
+        backgroundRect.anchorMax = new Vector2(0.5f, 0f);
+        backgroundRect.pivot = new Vector2(0.5f, 0f);
+        backgroundRect.sizeDelta = AccuracyGaugeSize;
+        backgroundRect.anchoredPosition = AccuracyGaugePosition;
+
+        AccuracyGaugeView gauge = background.gameObject.AddComponent<AccuracyGaugeView>();
+
+        GameObject fillMaskObject = new GameObject("FillMask", typeof(RectTransform), typeof(RectMask2D));
+        fillMaskObject.transform.SetParent(background.transform, false);
+        fillMaskObject.transform.SetAsLastSibling();
+
+        RectTransform fillMaskRect = fillMaskObject.GetComponent<RectTransform>();
+        Vector2 innerSize = new Vector2(
+            Mathf.Max(0f, AccuracyGaugeSize.x - (borderThickness * 2f)),
+            Mathf.Max(0f, AccuracyGaugeSize.y - (borderThickness * 2f)));
+
+        fillMaskRect.anchorMin = new Vector2(0f, 0.5f);
+        fillMaskRect.anchorMax = new Vector2(0f, 0.5f);
+        fillMaskRect.pivot = new Vector2(0f, 0.5f);
+        fillMaskRect.sizeDelta = new Vector2(0f, innerSize.y);
+        fillMaskRect.anchoredPosition = new Vector2(borderThickness, 0f);
+
+        Image fill = RuntimeUiFactory.CreateImage(
+            fillMaskObject.transform,
+            "Fill",
+            new Color32(0xFF, 0x7C, 0xB2, 0xFF),
+            RuntimeSpriteFactory.GetRoundedRectSprite(
+                Mathf.Max(1, Mathf.RoundToInt(innerSize.x)),
+                Mathf.Max(1, Mathf.RoundToInt(innerSize.y)),
+                innerSize.y * 0.5f));
+        fill.raycastTarget = false;
+
+        RectTransform fillRect = fill.rectTransform;
+        fillRect.anchorMin = new Vector2(0f, 0.5f);
+        fillRect.anchorMax = new Vector2(0f, 0.5f);
+        fillRect.pivot = new Vector2(0f, 0.5f);
+        fillRect.sizeDelta = innerSize;
+        fillRect.anchoredPosition = Vector2.zero;
+
+        gauge.Configure(fillMaskRect, innerSize.x, innerSize.y);
+        return gauge;
     }
 
     private void CreatePreviewPanel()

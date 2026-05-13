@@ -51,6 +51,7 @@ TemporaryDependencyNodeTargetIdentifier=netstandard2.1
 
 [sourceFiles]
 Assets/Scripts/
+ AccuracyGaugeView.cs
  BGMManager.cs
  Checkpoint.cs
  CompassBootstrap.cs
