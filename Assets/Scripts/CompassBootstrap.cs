@@ -325,7 +325,7 @@ public class CompassBootstrap : MonoBehaviour
         title.alignment = TextAnchor.UpperCenter;
         title.color = RuntimeUiTheme.TextColor;
         title.raycastTarget = false;
-        title.text = "<蹂닿린>";
+        title.text = "<보기>";
 
         RectTransform titleRect = titleObject.GetComponent<RectTransform>();
         titleRect.anchorMin = new Vector2(0f, 1f);
