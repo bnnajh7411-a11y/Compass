@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(TrailRenderer))]
@@ -6,6 +7,7 @@ public class Rotate : MonoBehaviour
     private const float RadiusStep = 0.5f;
     private const float MinRadius = 1f;
     private const float MaxRadius = 10f;
+    private const float ScoringSampleDistance = 0.02f;
 
     public GameObject target1;
     public GameObject target2;
@@ -18,8 +20,13 @@ public class Rotate : MonoBehaviour
     private Rigidbody2D body2D;
     private CircleCollider2D brushCollider;
     private Transform currentTarget;
-    private Vector3[] trailPositionsBuffer;
+    private Vector3[] scoredTrailPointsBuffer;
+    private readonly List<Vector3> scoredTrailPoints = new List<Vector3>();
+    private readonly List<int> scoredStrokeStartIndices = new List<int>();
     private bool isTransitioning;
+    private bool isDrawingInputActive;
+    private bool scoringDirty;
+    private bool wasDrawingLastFrame;
 
     private void Awake()
     {
@@ -92,6 +99,11 @@ public class Rotate : MonoBehaviour
 
         Vector2 rotatedDirection = (Vector2)(Quaternion.Euler(0f, 0f, orbitSpeed * Time.fixedDeltaTime) * offset.normalized);
         MoveBrushTo(center + (rotatedDirection * fixedRadius));
+
+        if (isDrawingInputActive)
+        {
+            CaptureScoredPoint(GetCurrentPosition());
+        }
     }
 
     private bool UpdateTargetSelection()
@@ -139,10 +151,22 @@ public class Rotate : MonoBehaviour
 
         if (trail != null)
         {
+            if (isDrawing && !wasDrawingLastFrame)
+            {
+                BeginScoredStroke();
+            }
+
             trail.emitting = isDrawing;
         }
 
+        if (!isDrawing && wasDrawingLastFrame)
+        {
+            CaptureScoredPoint(GetCurrentPosition(), true);
+        }
+
         GameManager.SetDrawSESoundActive(isDrawing);
+        isDrawingInputActive = isDrawing;
+        wasDrawingLastFrame = isDrawing;
     }
 
     private bool TryStepTarget(int direction)
@@ -380,34 +404,29 @@ public class Rotate : MonoBehaviour
 
     private void EvaluateTrailAccuracy()
     {
-        if (trail == null || ScoreManager.Instance == null)
+        if (ScoreManager.Instance == null)
         {
             return;
         }
 
-        if (!trail.emitting)
+        if (!isDrawingInputActive && !scoringDirty)
         {
             return;
         }
 
-        int positionCount = trail.positionCount;
-        if (positionCount < 2)
+        int positionCount = scoredTrailPoints.Count;
+        if (positionCount > 0)
         {
-            return;
+            if (scoredTrailPointsBuffer == null || scoredTrailPointsBuffer.Length < positionCount)
+            {
+                scoredTrailPointsBuffer = new Vector3[positionCount];
+            }
+
+            scoredTrailPoints.CopyTo(scoredTrailPointsBuffer, 0);
         }
 
-        if (trailPositionsBuffer == null || trailPositionsBuffer.Length < positionCount)
-        {
-            trailPositionsBuffer = new Vector3[positionCount];
-        }
-
-        int copiedPositions = trail.GetPositions(trailPositionsBuffer);
-        if (copiedPositions <= 0)
-        {
-            return;
-        }
-
-        ScoreManager.Instance.EvaluateTrail(trailPositionsBuffer, copiedPositions);
+        ScoreManager.Instance.EvaluateTrail(positionCount > 0 ? scoredTrailPointsBuffer : null, positionCount, scoredStrokeStartIndices);
+        scoringDirty = false;
     }
 
     public void SubmitResultAndLoadScene()
@@ -419,6 +438,7 @@ public class Rotate : MonoBehaviour
 
         isTransitioning = true;
         GameManager.SetDrawSESoundActive(false);
+        EvaluateTrailAccuracy();
 
         float accuracy = 0f;
 
@@ -437,6 +457,57 @@ public class Rotate : MonoBehaviour
             trail.Clear();
         }
 
-        trailPositionsBuffer = null;
+        scoredTrailPoints.Clear();
+        scoredStrokeStartIndices.Clear();
+        scoredTrailPointsBuffer = null;
+        isDrawingInputActive = false;
+        scoringDirty = true;
+        wasDrawingLastFrame = false;
+    }
+
+    private void BeginScoredStroke()
+    {
+        scoredStrokeStartIndices.Add(scoredTrailPoints.Count);
+        CaptureScoredPoint(GetCurrentPosition(), true);
+    }
+
+    private void CaptureScoredPoint(Vector2 worldPosition, bool forceAdd = false)
+    {
+        Vector3 sample = new Vector3(worldPosition.x, worldPosition.y, transform.position.z);
+
+        if (scoredTrailPoints.Count == 0 || forceAdd)
+        {
+            if (scoredTrailPoints.Count == 0 || scoredTrailPoints[scoredTrailPoints.Count - 1] != sample || forceAdd)
+            {
+                scoredTrailPoints.Add(sample);
+                scoringDirty = true;
+            }
+
+            return;
+        }
+
+        Vector3 lastPoint = scoredTrailPoints[scoredTrailPoints.Count - 1];
+        Vector3 delta = sample - lastPoint;
+        float distance = delta.magnitude;
+        if (distance < Mathf.Epsilon)
+        {
+            return;
+        }
+
+        Vector3 direction = delta / distance;
+        float travelled = ScoringSampleDistance;
+
+        while (travelled <= distance)
+        {
+            scoredTrailPoints.Add(lastPoint + (direction * travelled));
+            scoringDirty = true;
+            travelled += ScoringSampleDistance;
+        }
+
+        if ((scoredTrailPoints[scoredTrailPoints.Count - 1] - sample).sqrMagnitude > 0.000001f)
+        {
+            scoredTrailPoints.Add(sample);
+            scoringDirty = true;
+        }
     }
 }

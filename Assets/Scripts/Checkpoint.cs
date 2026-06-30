@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -32,7 +33,7 @@ public class Checkpoint : MonoBehaviour
         ScoreManager.Instance?.Refresh();
     }
 
-    public bool IsTouchedByTrail(Vector3[] trailPositions, int positionCount, float hitTolerance)
+    public bool IsTouchedByTrail(Vector3[] trailPositions, int positionCount, IReadOnlyList<int> strokeStartIndices, float hitTolerance)
     {
         if (isPassed || trailPositions == null || positionCount < 2)
         {
@@ -41,13 +42,24 @@ public class Checkpoint : MonoBehaviour
 
         Vector2 center = GetCheckpointCenter();
         float hitToleranceSq = Mathf.Max(0.0001f, hitTolerance * hitTolerance);
+        int strokeCount = strokeStartIndices != null && strokeStartIndices.Count > 0 ? strokeStartIndices.Count : 1;
 
-        for (int i = 1; i < positionCount; i++)
+        for (int strokeIndex = 0; strokeIndex < strokeCount; strokeIndex++)
         {
-            float distanceSq = DistancePointToSegmentSquared(center, trailPositions[i - 1], trailPositions[i]);
-            if (distanceSq <= hitToleranceSq)
+            int startIndex = strokeStartIndices != null && strokeStartIndices.Count > 0
+                ? Mathf.Clamp(strokeStartIndices[strokeIndex], 0, positionCount)
+                : 0;
+            int endExclusive = strokeIndex + 1 < strokeCount
+                ? Mathf.Clamp(strokeStartIndices[strokeIndex + 1], 0, positionCount)
+                : positionCount;
+
+            for (int i = startIndex + 1; i < endExclusive; i++)
             {
-                return true;
+                float distanceSq = DistancePointToSegmentSquared(center, trailPositions[i - 1], trailPositions[i]);
+                if (distanceSq <= hitToleranceSq)
+                {
+                    return true;
+                }
             }
         }
 

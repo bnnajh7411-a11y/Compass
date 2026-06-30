@@ -218,7 +218,7 @@ public class SplineGuide : MonoBehaviour
         return checkpointObject;
     }
 
-    public int CountCoveredSamples(Vector3[] trailPositions, int positionCount)
+    public int CountCoveredSamples(Vector3[] trailPositions, int positionCount, IReadOnlyList<int> strokeStartIndices)
     {
         if (trailPositions == null || positionCount < 2 || accuracySamplePaths.Count == 0)
         {
@@ -237,7 +237,7 @@ public class SplineGuide : MonoBehaviour
 
             foreach (Vector2 sample in path.Points)
             {
-                if (IsTrailNearPoint(trailPositions, positionCount, sample, toleranceSq))
+                if (IsTrailNearPoint(trailPositions, positionCount, strokeStartIndices, sample, toleranceSq))
                 {
                     coveredCount++;
                 }
@@ -375,13 +375,30 @@ public class SplineGuide : MonoBehaviour
         return hasUsableSpline;
     }
 
-    private static bool IsTrailNearPoint(Vector3[] trailPositions, int positionCount, Vector2 point, float toleranceSq)
+    private static bool IsTrailNearPoint(
+        Vector3[] trailPositions,
+        int positionCount,
+        IReadOnlyList<int> strokeStartIndices,
+        Vector2 point,
+        float toleranceSq)
     {
-        for (int i = 1; i < positionCount; i++)
+        int strokeCount = strokeStartIndices != null && strokeStartIndices.Count > 0 ? strokeStartIndices.Count : 1;
+
+        for (int strokeIndex = 0; strokeIndex < strokeCount; strokeIndex++)
         {
-            if (DistancePointToSegmentSquared(point, trailPositions[i - 1], trailPositions[i]) <= toleranceSq)
+            int startIndex = strokeStartIndices != null && strokeStartIndices.Count > 0
+                ? Mathf.Clamp(strokeStartIndices[strokeIndex], 0, positionCount)
+                : 0;
+            int endExclusive = strokeIndex + 1 < strokeCount
+                ? Mathf.Clamp(strokeStartIndices[strokeIndex + 1], 0, positionCount)
+                : positionCount;
+
+            for (int i = startIndex + 1; i < endExclusive; i++)
             {
-                return true;
+                if (DistancePointToSegmentSquared(point, trailPositions[i - 1], trailPositions[i]) <= toleranceSq)
+                {
+                    return true;
+                }
             }
         }
 

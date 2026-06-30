@@ -72,7 +72,7 @@ public class MenuSceneController : MonoBehaviour
         Text controlsText = RuntimeUiFactory.CreateText(
             controlsBackground.transform,
             "Controls",
-            "<조작 방법>\nA/D  중심 교체\nW/S  길이 조절\nR  그림 초기화\nSpace  그리기\nEnter  결과 보기",
+            "\u003c\uc870\uc791\u0020\ubc29\ubc95\u003e\u000d\n\u0041\u002f\u0044\u0020\u0020\uc911\uc2ec\u0020\uad50\uccb4\u000d\n\u0057\u002f\u0053\u0020\u0020\uae38\uc774\u0020\uc870\uc808\u000d\n\u0052\u0020\u0020\uadf8\ub9bc\u0020\ucd08\uae30\ud654\u000d\n\u0053\u0070\u0061\u0063\u0065\u0020\u0020\uadf8\ub9ac\uae30\u000d\n\u0045\u006e\u0074\u0065\u0072\u0020\u0020\uacb0\uacfc\u0020\ubcf4\uae30",
             ControlsFontSize,
             FontStyle.Bold,
             TextAnchor.MiddleCenter,
