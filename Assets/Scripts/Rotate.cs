@@ -58,6 +58,19 @@ public class Rotate : MonoBehaviour
 
     private void Update()
     {
+        if (GameManager.IsPaused)
+        {
+            if (trail != null)
+            {
+                trail.emitting = false;
+            }
+
+            isDrawingInputActive = false;
+            wasDrawingLastFrame = false;
+            GameManager.SetDrawSESoundActive(false);
+            return;
+        }
+
         if (Input.GetKeyDown(KeyCode.R))
         {
             ClearCurrentTrail();

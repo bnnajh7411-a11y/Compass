@@ -46,6 +46,7 @@ public sealed partial class GameManager
 
     private static void LoadScene(string sceneName)
     {
+        SetPaused(false);
         SceneManager.LoadScene(sceneName);
     }
 }

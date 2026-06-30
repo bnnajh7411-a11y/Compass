@@ -15,13 +15,21 @@ public enum RuntimeButtonSoundEffect
 public sealed partial class GameManager : MonoBehaviour
 {
     private const string StageBestAccuracyKeyPrefix = "Compass.StageBestAccuracy.";
+    private const string BackgroundMusicVolumeKey = "Compass.BackgroundMusicVolume";
+    private const string EffectsVolumeKey = "Compass.EffectsVolume";
+    private const string FullScreenEnabledKey = "Compass.FullScreenEnabled";
+    private const string ResolutionWidthKey = "Compass.ResolutionWidth";
+    private const string ResolutionHeightKey = "Compass.ResolutionHeight";
     private const string AudioResourcesFolder = "Audio";
     private const int MutedVolumePercent = 0;
     private const int EnabledVolumePercent = 100;
+    private const int DefaultBackgroundMusicVolumePercent = 100;
+    private const int DefaultEffectsVolumePercent = 100;
     private const float BackgroundMusicVolume = 1f;
     private const float UiSoundVolumeScale = 1.35f;
     private const float DrawSELoopVolume = 1f;
     public const int FirstStageIndex = 1;
+
     private static readonly string[] StageGuideNames =
     {
         "Spline1",
@@ -35,7 +43,13 @@ public sealed partial class GameManager : MonoBehaviour
     private static GameManager instance;
 
     private bool isInitialized;
+    private bool isPaused;
     private int masterVolumePercent = EnabledVolumePercent;
+    private int backgroundMusicVolumePercent = DefaultBackgroundMusicVolumePercent;
+    private int effectsVolumePercent = DefaultEffectsVolumePercent;
+    private bool isFullScreenEnabled = true;
+    private int resolutionWidth;
+    private int resolutionHeight;
     private float lastAccuracy;
     private int selectedStageIndex = FirstStageIndex;
     private AudioSource backgroundMusicSource;
@@ -49,6 +63,11 @@ public sealed partial class GameManager : MonoBehaviour
     private AudioClip resultSound;
 
     public static event System.Action<bool> MutedChanged;
+    public static event System.Action<int> BackgroundMusicVolumeChanged;
+    public static event System.Action<int> EffectsVolumeChanged;
+    public static event System.Action<bool> PauseStateChanged;
+    public static event System.Action<bool> FullScreenChanged;
+    public static event System.Action ResolutionChanged;
 
     public static float LastAccuracy => EnsureExists().lastAccuracy;
     public static int SelectedStageIndex => EnsureExists().selectedStageIndex;
@@ -57,15 +76,26 @@ public sealed partial class GameManager : MonoBehaviour
     public static bool HasNextStage => SelectedStageIndex < LastStageIndex;
     public static bool HasInstance => instance != null;
     public static bool IsMuted => EnsureExists().masterVolumePercent == MutedVolumePercent;
+    public static bool IsPaused => EnsureExists().isPaused;
+    public static int BackgroundMusicVolumePercent => EnsureExists().backgroundMusicVolumePercent;
+    public static int EffectsVolumePercent => EnsureExists().effectsVolumePercent;
+    public static bool IsFullScreenEnabled => EnsureExists().isFullScreenEnabled;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     private static void Bootstrap()
     {
         MutedChanged = null;
+        BackgroundMusicVolumeChanged = null;
+        EffectsVolumeChanged = null;
+        PauseStateChanged = null;
+        FullScreenChanged = null;
+        ResolutionChanged = null;
 
         GameManager manager = EnsureExists();
         manager.ResetSessionState();
+        manager.LoadPersistentSettings();
         manager.ApplyVolume();
+        manager.ApplyDisplaySettings();
     }
 
     public static void Toggle()
@@ -86,6 +116,123 @@ public sealed partial class GameManager : MonoBehaviour
         manager.masterVolumePercent = normalizedVolumePercent;
         manager.ApplyVolume();
         MutedChanged?.Invoke(manager.masterVolumePercent == MutedVolumePercent);
+    }
+
+    public static void SetBackgroundMusicVolumePercent(int volumePercent)
+    {
+        GameManager manager = EnsureExists();
+        int normalizedVolumePercent = Mathf.Clamp(volumePercent, MutedVolumePercent, EnabledVolumePercent);
+        if (manager.backgroundMusicVolumePercent == normalizedVolumePercent)
+        {
+            return;
+        }
+
+        manager.backgroundMusicVolumePercent = normalizedVolumePercent;
+        PlayerPrefs.SetInt(BackgroundMusicVolumeKey, normalizedVolumePercent);
+        PlayerPrefs.Save();
+        manager.ApplyVolume();
+        BackgroundMusicVolumeChanged?.Invoke(normalizedVolumePercent);
+    }
+
+    public static void SetEffectsVolumePercent(int volumePercent)
+    {
+        GameManager manager = EnsureExists();
+        int normalizedVolumePercent = Mathf.Clamp(volumePercent, MutedVolumePercent, EnabledVolumePercent);
+        if (manager.effectsVolumePercent == normalizedVolumePercent)
+        {
+            return;
+        }
+
+        manager.effectsVolumePercent = normalizedVolumePercent;
+        PlayerPrefs.SetInt(EffectsVolumeKey, normalizedVolumePercent);
+        PlayerPrefs.Save();
+        manager.ApplyVolume();
+        EffectsVolumeChanged?.Invoke(normalizedVolumePercent);
+    }
+
+    public static void SetPaused(bool paused)
+    {
+        GameManager manager = EnsureExists();
+        if (manager.isPaused == paused)
+        {
+            return;
+        }
+
+        manager.isPaused = paused;
+        if (paused)
+        {
+            SetDrawSESoundActive(false);
+        }
+
+        Time.timeScale = paused ? 0f : 1f;
+        PauseStateChanged?.Invoke(paused);
+    }
+
+    public static void SetFullScreenEnabled(bool isEnabled)
+    {
+        GameManager manager = EnsureExists();
+        if (manager.isFullScreenEnabled == isEnabled)
+        {
+            return;
+        }
+
+        manager.isFullScreenEnabled = isEnabled;
+        PlayerPrefs.SetInt(FullScreenEnabledKey, isEnabled ? 1 : 0);
+        PlayerPrefs.Save();
+        manager.ApplyDisplaySettings();
+        FullScreenChanged?.Invoke(isEnabled);
+    }
+
+    public static string CycleResolution()
+    {
+        GameManager manager = EnsureExists();
+        ResolutionOption[] options = GetAvailableResolutionOptions();
+        if (options.Length == 0)
+        {
+            return manager.GetCurrentResolutionLabelInternal();
+        }
+
+        int currentIndex = manager.GetCurrentResolutionIndex(options);
+        int nextIndex = (currentIndex + 1) % options.Length;
+        SetResolutionByIndex(nextIndex);
+        return manager.GetCurrentResolutionLabelInternal();
+    }
+
+    public static string GetCurrentResolutionLabel()
+    {
+        return EnsureExists().GetCurrentResolutionLabelInternal();
+    }
+
+    public static string[] GetResolutionLabels()
+    {
+        ResolutionOption[] options = GetAvailableResolutionOptions();
+        string[] labels = new string[options.Length];
+
+        for (int i = 0; i < options.Length; i++)
+        {
+            labels[i] = $"{options[i].Width} x {options[i].Height}";
+        }
+
+        return labels;
+    }
+
+    public static int GetCurrentResolutionIndex()
+    {
+        GameManager manager = EnsureExists();
+        return manager.GetCurrentResolutionIndex(GetAvailableResolutionOptions());
+    }
+
+    public static void SetResolutionByIndex(int optionIndex)
+    {
+        GameManager manager = EnsureExists();
+        ResolutionOption[] options = GetAvailableResolutionOptions();
+        if (options.Length == 0)
+        {
+            return;
+        }
+
+        int clampedIndex = Mathf.Clamp(optionIndex, 0, options.Length - 1);
+        manager.SetResolutionOption(options[clampedIndex]);
     }
 
     public static void RegisterBackgroundMusic(AudioSource audioSource)
@@ -234,6 +381,12 @@ public sealed partial class GameManager : MonoBehaviour
         return StageGuideNames[clampedIndex];
     }
 
+    public static void QuitApplication()
+    {
+        SetPaused(false);
+        Application.Quit();
+    }
+
     private static GameManager EnsureExists()
     {
         if (instance != null)
@@ -267,6 +420,12 @@ public sealed partial class GameManager : MonoBehaviour
             instance = null;
             backgroundMusicSource = null;
             MutedChanged = null;
+            BackgroundMusicVolumeChanged = null;
+            EffectsVolumeChanged = null;
+            PauseStateChanged = null;
+            FullScreenChanged = null;
+            ResolutionChanged = null;
+            Time.timeScale = 1f;
         }
     }
 
@@ -279,22 +438,46 @@ public sealed partial class GameManager : MonoBehaviour
 
         isInitialized = true;
         ResetSessionState();
+        LoadPersistentSettings();
         ApplyVolume();
+        ApplyDisplaySettings();
     }
 
     private void ResetSessionState()
     {
+        isPaused = false;
         masterVolumePercent = EnabledVolumePercent;
+        backgroundMusicVolumePercent = DefaultBackgroundMusicVolumePercent;
+        effectsVolumePercent = DefaultEffectsVolumePercent;
+        isFullScreenEnabled = Screen.fullScreen;
+        resolutionWidth = Screen.width;
+        resolutionHeight = Screen.height;
         lastAccuracy = 0f;
         selectedStageIndex = FirstStageIndex;
         backgroundMusicSource = null;
         ResetAudioSource(soundEffectSource, false);
         ResetAudioSource(drawSELoopSource, true);
+        Time.timeScale = 1f;
     }
 
     private void ApplyVolume()
     {
-        AudioListener.volume = Mathf.Clamp01(masterVolumePercent / (float)EnabledVolumePercent);
+        AudioListener.volume = IsMuted ? 0f : 1f;
+
+        if (backgroundMusicSource != null)
+        {
+            backgroundMusicSource.volume = BackgroundMusicVolume * (backgroundMusicVolumePercent / (float)EnabledVolumePercent);
+        }
+
+        if (soundEffectSource != null)
+        {
+            soundEffectSource.volume = effectsVolumePercent / (float)EnabledVolumePercent;
+        }
+
+        if (drawSELoopSource != null)
+        {
+            drawSELoopSource.volume = DrawSELoopVolume * (effectsVolumePercent / (float)EnabledVolumePercent);
+        }
     }
 
     private AudioSource GetOrCreateSoundEffectSource()
@@ -325,14 +508,15 @@ public sealed partial class GameManager : MonoBehaviour
         audioSource.playOnAwake = false;
         audioSource.loop = isLooping;
         audioSource.spatialBlend = 0f;
-        audioSource.volume = isLooping ? DrawSELoopVolume : 1f;
+        audioSource.volume = 1f;
+        ApplyVolume();
         return audioSource;
     }
 
     private void ConfigureBackgroundMusicSource(AudioSource audioSource)
     {
         audioSource.spatialBlend = 0f;
-        audioSource.volume = BackgroundMusicVolume;
+        ApplyVolume();
     }
 
     private AudioClip GetUiSoundClip(RuntimeButtonSoundEffect soundEffect)
@@ -378,6 +562,138 @@ public sealed partial class GameManager : MonoBehaviour
             : EnabledVolumePercent;
     }
 
+    private void LoadPersistentSettings()
+    {
+        backgroundMusicVolumePercent = Mathf.Clamp(
+            PlayerPrefs.GetInt(BackgroundMusicVolumeKey, DefaultBackgroundMusicVolumePercent),
+            MutedVolumePercent,
+            EnabledVolumePercent);
+        effectsVolumePercent = Mathf.Clamp(
+            PlayerPrefs.GetInt(EffectsVolumeKey, DefaultEffectsVolumePercent),
+            MutedVolumePercent,
+            EnabledVolumePercent);
+        isFullScreenEnabled = PlayerPrefs.GetInt(FullScreenEnabledKey, Screen.fullScreen ? 1 : 0) != 0;
+
+        ResolutionOption[] options = GetAvailableResolutionOptions();
+        int savedWidth = PlayerPrefs.GetInt(ResolutionWidthKey, Screen.width);
+        int savedHeight = PlayerPrefs.GetInt(ResolutionHeightKey, Screen.height);
+        if (options.Length == 0)
+        {
+            resolutionWidth = savedWidth;
+            resolutionHeight = savedHeight;
+            return;
+        }
+
+        int optionIndex = GetClosestResolutionIndex(options, savedWidth, savedHeight);
+        resolutionWidth = options[optionIndex].Width;
+        resolutionHeight = options[optionIndex].Height;
+    }
+
+    private void ApplyDisplaySettings()
+    {
+        if (resolutionWidth <= 0 || resolutionHeight <= 0)
+        {
+            resolutionWidth = Mathf.Max(Screen.width, 1);
+            resolutionHeight = Mathf.Max(Screen.height, 1);
+        }
+
+        Screen.SetResolution(resolutionWidth, resolutionHeight, isFullScreenEnabled);
+    }
+
+    private void SetResolutionOption(ResolutionOption option)
+    {
+        resolutionWidth = option.Width;
+        resolutionHeight = option.Height;
+        PlayerPrefs.SetInt(ResolutionWidthKey, resolutionWidth);
+        PlayerPrefs.SetInt(ResolutionHeightKey, resolutionHeight);
+        PlayerPrefs.Save();
+        ApplyDisplaySettings();
+        ResolutionChanged?.Invoke();
+    }
+
+    private string GetCurrentResolutionLabelInternal()
+    {
+        int width = resolutionWidth > 0 ? resolutionWidth : Screen.width;
+        int height = resolutionHeight > 0 ? resolutionHeight : Screen.height;
+        return $"{width} x {height}";
+    }
+
+    private int GetCurrentResolutionIndex(ResolutionOption[] options)
+    {
+        if (options == null || options.Length == 0)
+        {
+            return 0;
+        }
+
+        return GetClosestResolutionIndex(options, resolutionWidth, resolutionHeight);
+    }
+
+    private static int GetClosestResolutionIndex(ResolutionOption[] options, int targetWidth, int targetHeight)
+    {
+        if (options == null || options.Length == 0)
+        {
+            return 0;
+        }
+
+        int bestIndex = 0;
+        int bestDistance = int.MaxValue;
+
+        for (int i = 0; i < options.Length; i++)
+        {
+            int widthDelta = Mathf.Abs(options[i].Width - targetWidth);
+            int heightDelta = Mathf.Abs(options[i].Height - targetHeight);
+            int totalDistance = widthDelta + heightDelta;
+            if (totalDistance < bestDistance)
+            {
+                bestDistance = totalDistance;
+                bestIndex = i;
+            }
+        }
+
+        return bestIndex;
+    }
+
+    private static ResolutionOption[] GetAvailableResolutionOptions()
+    {
+        Resolution[] availableResolutions = Screen.resolutions;
+        if (availableResolutions == null || availableResolutions.Length == 0)
+        {
+            return new[]
+            {
+                new ResolutionOption(Mathf.Max(Screen.width, 1), Mathf.Max(Screen.height, 1))
+            };
+        }
+
+        System.Collections.Generic.List<ResolutionOption> options = new System.Collections.Generic.List<ResolutionOption>();
+        for (int i = 0; i < availableResolutions.Length; i++)
+        {
+            Resolution resolution = availableResolutions[i];
+            bool alreadyExists = false;
+            for (int optionIndex = 0; optionIndex < options.Count; optionIndex++)
+            {
+                if (options[optionIndex].Width == resolution.width
+                    && options[optionIndex].Height == resolution.height)
+                {
+                    alreadyExists = true;
+                    break;
+                }
+            }
+
+            if (!alreadyExists)
+            {
+                options.Add(new ResolutionOption(resolution.width, resolution.height));
+            }
+        }
+
+        options.Sort((left, right) =>
+        {
+            int widthComparison = left.Width.CompareTo(right.Width);
+            return widthComparison != 0 ? widthComparison : left.Height.CompareTo(right.Height);
+        });
+
+        return options.ToArray();
+    }
+
     private static void ResetAudioSource(AudioSource audioSource, bool clearClip)
     {
         if (audioSource == null)
@@ -411,5 +727,17 @@ public sealed partial class GameManager : MonoBehaviour
     private static string GetBestAccuracyKey(int stageIndex)
     {
         return $"{StageBestAccuracyKeyPrefix}{Mathf.Clamp(stageIndex, FirstStageIndex, LastStageIndex)}";
+    }
+
+    private struct ResolutionOption
+    {
+        public ResolutionOption(int width, int height)
+        {
+            Width = Mathf.Max(width, 1);
+            Height = Mathf.Max(height, 1);
+        }
+
+        public int Width { get; }
+        public int Height { get; }
     }
 }

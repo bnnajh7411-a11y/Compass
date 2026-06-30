@@ -135,6 +135,7 @@ public class CompassBootstrap : MonoBehaviour
         }
 
         RuntimeUiFactory.CreateAudioToggleButton(canvasTransform);
+        RuntimePauseMenu.Create(canvasTransform, true);
         scoreManager.Refresh();
     }
 

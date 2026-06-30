@@ -96,6 +96,7 @@ public class ResultSceneController : MonoBehaviour
                 LoadMenuScene);
         }
         RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
+        RuntimePauseMenu.Create(canvas.transform, false);
     }
 
     private void RefreshUi()
