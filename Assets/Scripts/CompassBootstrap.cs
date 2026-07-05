@@ -134,7 +134,6 @@ public class CompassBootstrap : MonoBehaviour
             RuntimeUiFactory.CreateCheckIconButton(canvasTransform, rotate.SubmitResultAndLoadScene);
         }
 
-        RuntimeUiFactory.CreateAudioToggleButton(canvasTransform);
         RuntimePauseMenu.Create(canvasTransform, true);
         scoreManager.Refresh();
     }

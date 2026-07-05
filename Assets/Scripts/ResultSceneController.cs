@@ -95,7 +95,6 @@ public class ResultSceneController : MonoBehaviour
                 new Vector2(0f, 56f),
                 LoadMenuScene);
         }
-        RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
         RuntimePauseMenu.Create(canvas.transform, false);
     }
 

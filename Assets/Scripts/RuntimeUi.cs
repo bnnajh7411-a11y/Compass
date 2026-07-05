@@ -16,16 +16,12 @@ public static class RuntimeUiTheme
 
 public static class RuntimeUiFactory
 {
-    private const string AudioIconResourcesPath = "AudioIcon";
     private const string CheckIconResourcesPath = "CheckIcon";
-    private const float AudioButtonSize = 56f * 1.15f;
-    private const float AudioButtonMargin = 24f;
     private const float CheckButtonSize = 112f * 1.15f;
     private const float CheckButtonMargin = 24f;
     private const float CardCornerRadius = 36f;
 
     private static Font defaultFont;
-    private static Sprite audioIconSprite;
     private static Sprite checkIconSprite;
 
     public static void EnsureEventSystem()
@@ -115,28 +111,9 @@ public static class RuntimeUiFactory
         return image;
     }
 
-    public static Button CreateAudioToggleButton(Transform parent)
-    {
-        Button button = CreateIconButton(
-            parent,
-            "AudioButton",
-            GetAudioIconSprite(),
-            GameManager.IsMuted ? new Color(1f, 1f, 1f, 0.45f) : Color.white,
-            new Vector2(AudioButtonSize, AudioButtonSize),
-            new Vector2(AudioButtonMargin * 1.8f, -AudioButtonMargin * 1.5f),
-            new Vector2(0f, 1f),
-            new Vector2(0f, 1f),
-            new Vector2(0f, 1f),
-            false,
-            soundEffect: RuntimeButtonSoundEffect.None);
-
-        button.gameObject.AddComponent<RuntimeAudioToggleButton>();
-        return button;
-    }
-
     public static Button CreateCheckIconButton(Transform parent, UnityAction onClick)
     {
-        Button button = CreateIconButton(
+        return CreateIconButton(
             parent,
             "CheckButton",
             GetCheckIconSprite(),
@@ -146,10 +123,8 @@ public static class RuntimeUiFactory
             new Vector2(1f, 0f),
             new Vector2(1f, 0f),
             new Vector2(1f, 0f),
-            true,
             onClick,
             RuntimeButtonSoundEffect.Result);
-        return button;
     }
 
     public static Text CreateText(
@@ -245,7 +220,6 @@ public static class RuntimeUiFactory
         Vector2 anchorMin,
         Vector2 anchorMax,
         Vector2 pivot,
-        bool useThemeButton,
         UnityAction onClick = null,
         RuntimeButtonSoundEffect soundEffect = RuntimeButtonSoundEffect.ButtonTab)
     {
@@ -258,16 +232,7 @@ public static class RuntimeUiFactory
         image.preserveAspect = true;
 
         Button button = buttonObject.AddComponent<Button>();
-        if (useThemeButton)
-        {
-            ApplyThemeButton(button, image, soundEffect);
-        }
-        else
-        {
-            button.transition = Selectable.Transition.None;
-            button.targetGraphic = image;
-            ConfigureButtonSound(button, soundEffect);
-        }
+        ApplyThemeButton(button, image, soundEffect);
 
         if (onClick != null)
         {
@@ -293,34 +258,6 @@ public static class RuntimeUiFactory
         }
 
         return defaultFont;
-    }
-
-    private static Sprite GetAudioIconSprite()
-    {
-        if (audioIconSprite != null)
-        {
-            return audioIconSprite;
-        }
-
-        Sprite[] sprites = Resources.LoadAll<Sprite>(AudioIconResourcesPath);
-        for (int i = 0; i < sprites.Length; i++)
-        {
-            Sprite sprite = sprites[i];
-            if (sprite != null && string.Equals(sprite.name, "AudioIcon", System.StringComparison.OrdinalIgnoreCase))
-            {
-                audioIconSprite = sprite;
-                return audioIconSprite;
-            }
-        }
-
-        if (sprites.Length > 0)
-        {
-            audioIconSprite = sprites[0];
-            return audioIconSprite;
-        }
-
-        audioIconSprite = RuntimeSpriteFactory.GetWhiteSprite();
-        return audioIconSprite;
     }
 
     private static Sprite GetCheckIconSprite()
@@ -392,70 +329,6 @@ public sealed class RuntimeButtonSound : MonoBehaviour
         }
 
         GameManager.PlayUiSound(soundEffect);
-    }
-}
-
-[DisallowMultipleComponent]
-public sealed class RuntimeAudioToggleButton : MonoBehaviour
-{
-    private static readonly Color EnabledColor = Color.white;
-    private static readonly Color MutedColor = new Color(1f, 1f, 1f, 0.45f);
-
-    private Image iconImage;
-    private Button button;
-
-    private void Awake()
-    {
-        iconImage = GetComponent<Image>();
-        button = GetComponent<Button>();
-
-        if (button != null)
-        {
-            Navigation navigation = button.navigation;
-            navigation.mode = Navigation.Mode.None;
-            button.navigation = navigation;
-        }
-    }
-
-    private void OnEnable()
-    {
-        if (button != null)
-        {
-            button.onClick.AddListener(HandleClick);
-        }
-
-        GameManager.MutedChanged += HandleMutedChanged;
-        Refresh();
-    }
-
-    private void OnDisable()
-    {
-        if (button != null)
-        {
-            button.onClick.RemoveListener(HandleClick);
-        }
-
-        GameManager.MutedChanged -= HandleMutedChanged;
-    }
-
-    private void HandleClick()
-    {
-        GameManager.Toggle();
-    }
-
-    private void HandleMutedChanged(bool _)
-    {
-        Refresh();
-    }
-
-    private void Refresh()
-    {
-        if (iconImage == null)
-        {
-            return;
-        }
-
-        iconImage.color = GameManager.IsMuted ? MutedColor : EnabledColor;
     }
 }
 

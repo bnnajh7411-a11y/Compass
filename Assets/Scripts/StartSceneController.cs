@@ -31,8 +31,6 @@ public class StartSceneController : MonoBehaviour
         RectTransform card = CreateCard(background.transform);
         RectTransform title = CreateTitleImage(background.transform);
         CreateStartButton(card);
-        RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
-
         if (title != null)
         {
             StartCoroutine(AnimateTitleFadeIn(title));

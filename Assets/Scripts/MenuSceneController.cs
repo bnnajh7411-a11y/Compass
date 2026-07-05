@@ -85,7 +85,6 @@ public class MenuSceneController : MonoBehaviour
         controlsText.supportRichText = false;
 
         CreateStageButtons(card, stageCount);
-        RuntimeUiFactory.CreateAudioToggleButton(canvas.transform);
         RuntimePauseMenu.Create(canvas.transform, false);
     }
 
