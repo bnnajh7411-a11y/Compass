@@ -397,9 +397,11 @@ public class ScoreManager : MonoBehaviour
         switch (Mathf.Clamp(stageIndex, GameManager.FirstStageIndex, GameManager.LastStageIndex))
         {
             case 3:
+                return Mathf.Clamp01(score * 1f);
             case 4:
-            case 5:
                 return Mathf.Clamp01(score * 1.1f);
+            case 5:
+                return Mathf.Clamp01(score * 1f);
             case 6:
                 return Mathf.Clamp01(score * 1.05f);
             default:

@@ -40,6 +40,23 @@ public sealed partial class GameManager : MonoBehaviour
         "Spline6",
     };
 
+    private static readonly Vector2Int[] CommonResolutionPresets =
+    {
+        new Vector2Int(1024, 768),
+        new Vector2Int(1280, 720),
+        new Vector2Int(1280, 800),
+        new Vector2Int(1280, 1024),
+        new Vector2Int(1366, 768),
+        new Vector2Int(1440, 900),
+        new Vector2Int(1600, 900),
+        new Vector2Int(1680, 1050),
+        new Vector2Int(1920, 1080),
+        new Vector2Int(1920, 1200),
+        new Vector2Int(2560, 1440),
+        new Vector2Int(2560, 1600),
+        new Vector2Int(3840, 2160),
+    };
+
     private static GameManager instance;
 
     private bool isInitialized;
@@ -185,6 +202,11 @@ public sealed partial class GameManager : MonoBehaviour
 
     public static string CycleResolution()
     {
+        return CycleResolution(1);
+    }
+
+    public static string CycleResolution(int step)
+    {
         GameManager manager = EnsureExists();
         ResolutionOption[] options = GetAvailableResolutionOptions();
         if (options.Length == 0)
@@ -193,7 +215,13 @@ public sealed partial class GameManager : MonoBehaviour
         }
 
         int currentIndex = manager.GetCurrentResolutionIndex(options);
-        int nextIndex = (currentIndex + 1) % options.Length;
+        if (step == 0 || options.Length == 1)
+        {
+            return manager.GetCurrentResolutionLabelInternal();
+        }
+
+        int normalizedStep = step % options.Length;
+        int nextIndex = (currentIndex + normalizedStep + options.Length) % options.Length;
         SetResolutionByIndex(nextIndex);
         return manager.GetCurrentResolutionLabelInternal();
     }
@@ -384,7 +412,11 @@ public sealed partial class GameManager : MonoBehaviour
     public static void QuitApplication()
     {
         SetPaused(false);
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
         Application.Quit();
+#endif
     }
 
     private static GameManager EnsureExists()
@@ -668,6 +700,11 @@ public sealed partial class GameManager : MonoBehaviour
         for (int i = 0; i < availableResolutions.Length; i++)
         {
             Resolution resolution = availableResolutions[i];
+            if (!IsCommonResolutionPreset(resolution.width, resolution.height))
+            {
+                continue;
+            }
+
             bool alreadyExists = false;
             for (int optionIndex = 0; optionIndex < options.Count; optionIndex++)
             {
@@ -685,6 +722,8 @@ public sealed partial class GameManager : MonoBehaviour
             }
         }
 
+        AddResolutionIfMissing(options, Screen.width, Screen.height);
+
         options.Sort((left, right) =>
         {
             int widthComparison = left.Width.CompareTo(right.Width);
@@ -692,6 +731,39 @@ public sealed partial class GameManager : MonoBehaviour
         });
 
         return options.ToArray();
+    }
+
+    private static bool IsCommonResolutionPreset(int width, int height)
+    {
+        for (int i = 0; i < CommonResolutionPresets.Length; i++)
+        {
+            if (CommonResolutionPresets[i].x == width && CommonResolutionPresets[i].y == height)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void AddResolutionIfMissing(System.Collections.Generic.List<ResolutionOption> options, int width, int height)
+    {
+        if (options == null)
+        {
+            return;
+        }
+
+        int normalizedWidth = Mathf.Max(width, 1);
+        int normalizedHeight = Mathf.Max(height, 1);
+        for (int i = 0; i < options.Count; i++)
+        {
+            if (options[i].Width == normalizedWidth && options[i].Height == normalizedHeight)
+            {
+                return;
+            }
+        }
+
+        options.Add(new ResolutionOption(normalizedWidth, normalizedHeight));
     }
 
     private static void ResetAudioSource(AudioSource audioSource, bool clearClip)

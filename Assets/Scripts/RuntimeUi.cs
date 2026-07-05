@@ -466,12 +466,30 @@ public sealed class RuntimePauseMenu : MonoBehaviour
     private static readonly Color CardColor = new Color(1f, 1f, 1f, 0.92f);
     private static readonly Color SliderBackgroundColor = new Color32(0xDD, 0xDD, 0xDD, 0xFF);
     private static readonly Color SliderFillColor = new Color32(0xFF, 0x7C, 0xB2, 0xFF);
+    private static readonly Color ToggleLabelColor = new Color32(0x92, 0x92, 0x92, 0xFF);
+    private static readonly Color ToggleBackgroundColor = new Color32(0xC8, 0xC8, 0xC8, 0xFF);
+    private static readonly Color ToggleHoverColor = new Color32(0xB9, 0xB9, 0xB9, 0xFF);
+    private static readonly Color TogglePressedColor = new Color32(0xA9, 0xA9, 0xA9, 0xFF);
+    private static readonly Color ToggleDisabledColor = new Color32(0xDE, 0xDE, 0xDE, 0xFF);
+    private static readonly Color DropdownBackgroundColor = Color.white;
+    private static readonly Color ScrollbarTrackColor = new Color32(0xE5, 0xE5, 0xE5, 0xFF);
+    private static readonly Color ScrollbarHandleColor = new Color32(0xC2, 0xC2, 0xC2, 0xFF);
+    private const float ResolutionDropdownWidth = 284f;
+    private const float ResolutionDropdownHeight = 204f;
+    private const float ResolutionOptionHeight = 44f;
+    private const float ResolutionOptionSpacing = 8f;
+    private const float ResolutionOptionHorizontalPadding = 16f;
+    private const float ResolutionScrollbarWidth = 18f;
+    private const float ResolutionScrollbarInset = 3f;
+    private const float ResolutionScrollbarVerticalPadding = 6f;
+    private const int ResolutionOptionFontSize = 18;
 
     private bool includeLevelSelectButton;
     private bool isOpen;
     private GameObject overlayObject;
     private GameObject pausePanelObject;
     private GameObject settingsPanelObject;
+    private GameObject quitConfirmPanelObject;
     private Slider backgroundMusicSlider;
     private Slider effectsSlider;
     private Toggle fullScreenToggle;
@@ -480,6 +498,8 @@ public sealed class RuntimePauseMenu : MonoBehaviour
     private Text effectsValueText;
     private Text resolutionValueText;
     private GameObject resolutionDropdownObject;
+    private ScrollRect resolutionScrollRect;
+    private RectTransform resolutionContentRect;
     private readonly List<Button> resolutionOptionButtons = new List<Button>();
 
     public static RuntimePauseMenu Create(Transform parent, bool includeLevelSelectButton)
@@ -525,6 +545,11 @@ public sealed class RuntimePauseMenu : MonoBehaviour
 
     private void Update()
     {
+        if (IsResolutionDropdownOpen())
+        {
+            HandleResolutionDropdownOutsideClick();
+        }
+
         if (!Input.GetKeyDown(KeyCode.Escape))
         {
             return;
@@ -532,6 +557,18 @@ public sealed class RuntimePauseMenu : MonoBehaviour
 
         if (isOpen)
         {
+            if (IsResolutionDropdownOpen())
+            {
+                SetResolutionDropdownOpen(false);
+                return;
+            }
+
+            if (quitConfirmPanelObject != null && quitConfirmPanelObject.activeSelf)
+            {
+                ShowPausePanel();
+                return;
+            }
+
             CloseMenu();
             return;
         }
@@ -553,11 +590,21 @@ public sealed class RuntimePauseMenu : MonoBehaviour
 
         pausePanelObject = CreatePausePanel(overlayObject.transform);
         settingsPanelObject = CreateSettingsPanel(overlayObject.transform);
+        quitConfirmPanelObject = CreateQuitConfirmPanel(overlayObject.transform);
     }
 
     private GameObject CreatePausePanel(Transform parent)
     {
-        Image card = RuntimeUiFactory.CreateCardImage(parent, "PausePanel", CardColor, new Vector2(560f, 460f));
+        const float buttonWidth = 320f;
+        const float buttonHeight = 68f;
+        const float buttonSpacing = 22f;
+        int buttonCount = includeLevelSelectButton ? 4 : 3;
+        float buttonRootWidth = buttonWidth;
+        float buttonRootHeight = (buttonHeight * buttonCount) + (buttonSpacing * (buttonCount - 1));
+        float cardWidth = buttonRootWidth + 80f;
+        float cardHeight = buttonRootHeight + 72f;
+
+        Image card = RuntimeUiFactory.CreateCardImage(parent, "PausePanel", CardColor, new Vector2(cardWidth, cardHeight));
         card.raycastTarget = true;
 
         RectTransform cardRect = card.rectTransform;
@@ -566,35 +613,7 @@ public sealed class RuntimePauseMenu : MonoBehaviour
         cardRect.pivot = new Vector2(0.5f, 0.5f);
         cardRect.anchoredPosition = Vector2.zero;
 
-        RuntimeUiFactory.CreateText(
-            card.transform,
-            "Title",
-            "PAUSE",
-            36,
-            FontStyle.Bold,
-            TextAnchor.UpperCenter,
-            RuntimeUiTheme.TextColor,
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f),
-            new Vector2(0.5f, 1f),
-            new Vector2(420f, 48f),
-            new Vector2(0f, -36f));
-
-        RuntimeUiFactory.CreateText(
-            card.transform,
-            "Hint",
-            "\u0045\u0053\u0043\ub85c \ub3cc\uc544\uac00\uae30",
-            18,
-            FontStyle.Bold,
-            TextAnchor.UpperCenter,
-            RuntimeUiTheme.TextColor,
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f),
-            new Vector2(0.5f, 1f),
-            new Vector2(420f, 28f),
-            new Vector2(0f, -82f));
-
-        RectTransform buttonRoot = CreateVerticalButtonRoot(card.transform, new Vector2(0f, -20f));
+        RectTransform buttonRoot = CreateVerticalButtonRoot(card.transform, Vector2.zero, buttonRootWidth, buttonRootHeight, buttonSpacing);
         CreateMenuButton(buttonRoot, "\uc124\uc815", ShowSettingsPanel);
 
         if (includeLevelSelectButton)
@@ -608,9 +627,55 @@ public sealed class RuntimePauseMenu : MonoBehaviour
 
         CreateMenuButton(buttonRoot, "\uac8c\uc784 \uc885\ub8cc", () =>
         {
-            CloseMenu();
-            GameManager.QuitApplication();
+            ShowQuitConfirmPanel();
         });
+        CreateMenuButton(buttonRoot, "\ub4a4\ub85c", CloseMenu);
+
+        return card.gameObject;
+    }
+
+    private GameObject CreateQuitConfirmPanel(Transform parent)
+    {
+        Image card = RuntimeUiFactory.CreateCardImage(parent, "QuitConfirmPanel", CardColor, new Vector2(560f, 280f));
+        card.raycastTarget = true;
+
+        RectTransform cardRect = card.rectTransform;
+        cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+        cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+        cardRect.pivot = new Vector2(0.5f, 0.5f);
+        cardRect.anchoredPosition = Vector2.zero;
+
+        RuntimeUiFactory.CreateText(
+            card.transform,
+            "Title",
+            "\uac8c\uc784\uc744 \uc885\ub8cc\ud558\uc2dc\uaca0\uc2b5\ub2c8\uae4c?",
+            32,
+            FontStyle.Bold,
+            TextAnchor.MiddleCenter,
+            RuntimeUiTheme.TextColor,
+            new Vector2(0f, 1f),
+            new Vector2(1f, 1f),
+            new Vector2(0.5f, 1f),
+            new Vector2(460f, 64f),
+            new Vector2(0f, -56f));
+
+        CreateMenuButton(
+            card.transform,
+            "\uc885\ub8cc",
+            () =>
+            {
+                CloseMenu();
+                GameManager.QuitApplication();
+            },
+            new Vector2(220f, 62f),
+            new Vector2(-122f, -72f));
+
+        CreateMenuButton(
+            card.transform,
+            "\uc544\ub2c8\uc694",
+            ShowPausePanel,
+            new Vector2(220f, 62f),
+            new Vector2(122f, -72f));
 
         return card.gameObject;
     }
@@ -662,14 +727,19 @@ public sealed class RuntimePauseMenu : MonoBehaviour
         return card.gameObject;
     }
 
-    private RectTransform CreateVerticalButtonRoot(Transform parent, Vector2 anchoredPosition)
+    private RectTransform CreateVerticalButtonRoot(
+        Transform parent,
+        Vector2 anchoredPosition,
+        float width = 360f,
+        float height = 360f,
+        float spacing = 22f)
     {
         RectTransform root = new GameObject("ButtonRoot", typeof(RectTransform)).GetComponent<RectTransform>();
         root.SetParent(parent, false);
         root.anchorMin = new Vector2(0.5f, 0.5f);
         root.anchorMax = new Vector2(0.5f, 0.5f);
         root.pivot = new Vector2(0.5f, 0.5f);
-        root.sizeDelta = new Vector2(360f, 260f);
+        root.sizeDelta = new Vector2(width, height);
         root.anchoredPosition = anchoredPosition;
 
         VerticalLayoutGroup layoutGroup = root.gameObject.AddComponent<VerticalLayoutGroup>();
@@ -678,7 +748,7 @@ public sealed class RuntimePauseMenu : MonoBehaviour
         layoutGroup.childControlHeight = false;
         layoutGroup.childForceExpandWidth = false;
         layoutGroup.childForceExpandHeight = false;
-        layoutGroup.spacing = 22f;
+        layoutGroup.spacing = spacing;
         layoutGroup.padding = new RectOffset(0, 0, 0, 0);
         return root;
     }
@@ -791,11 +861,10 @@ public sealed class RuntimePauseMenu : MonoBehaviour
         Transform labelTransform = row.Find("Label");
         if (labelTransform != null)
         {
-            RectTransform labelRect = labelTransform.GetComponent<RectTransform>();
-            if (labelRect != null)
+            Text labelText = labelTransform.GetComponent<Text>();
+            if (labelText != null)
             {
-                labelRect.anchoredPosition = new Vector2(84f, -6f);
-                labelRect.sizeDelta = new Vector2(220f, 32f);
+                labelText.color = ToggleLabelColor;
             }
         }
 
@@ -804,16 +873,16 @@ public sealed class RuntimePauseMenu : MonoBehaviour
         toggle = toggleObject.AddComponent<Toggle>();
 
         RectTransform toggleRect = toggleObject.GetComponent<RectTransform>();
-        toggleRect.anchorMin = new Vector2(0f, 0.5f);
-        toggleRect.anchorMax = new Vector2(0f, 0.5f);
-        toggleRect.pivot = new Vector2(0f, 0.5f);
+        toggleRect.anchorMin = new Vector2(1f, 0.5f);
+        toggleRect.anchorMax = new Vector2(1f, 0.5f);
+        toggleRect.pivot = new Vector2(1f, 0.5f);
         toggleRect.sizeDelta = new Vector2(52f, 52f);
-        toggleRect.anchoredPosition = new Vector2(8f, -8f);
+        toggleRect.anchoredPosition = new Vector2(-8f, -6f);
 
         Image background = RuntimeUiFactory.CreateImage(
             toggleObject.transform,
             "Background",
-            RuntimeUiTheme.ButtonNormalColor,
+            ToggleBackgroundColor,
             RuntimeSpriteFactory.GetRoundedRectSprite(52, 52, 14f));
         RectTransform backgroundRect = background.rectTransform;
         backgroundRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -834,11 +903,11 @@ public sealed class RuntimePauseMenu : MonoBehaviour
         toggle.graphic = checkmark;
 
         ColorBlock colors = toggle.colors;
-        colors.normalColor = RuntimeUiTheme.ButtonNormalColor;
-        colors.highlightedColor = RuntimeUiTheme.ButtonHoverColor;
-        colors.pressedColor = RuntimeUiTheme.ButtonPressedColor;
-        colors.selectedColor = RuntimeUiTheme.ButtonHoverColor;
-        colors.disabledColor = RuntimeUiTheme.ButtonDisabledColor;
+        colors.normalColor = ToggleBackgroundColor;
+        colors.highlightedColor = ToggleHoverColor;
+        colors.pressedColor = TogglePressedColor;
+        colors.selectedColor = ToggleHoverColor;
+        colors.disabledColor = ToggleDisabledColor;
         toggle.colors = colors;
     }
 
@@ -852,100 +921,198 @@ public sealed class RuntimePauseMenu : MonoBehaviour
             ToggleResolutionDropdown,
             new Vector2(260f, 58f),
             new Vector2(160f, -6f));
-
         resolutionValueText = resolutionButton.GetComponentInChildren<Text>();
 
-        resolutionDropdownObject = new GameObject("ResolutionDropdown");
-        resolutionDropdownObject.transform.SetParent(row, false);
-
-        BuildResolutionDropdown();
+        CreateResolutionDropdown(row);
         SetResolutionDropdownOpen(false);
     }
 
-    private void BuildResolutionDropdown()
+    private void CreateResolutionDropdown(Transform parent)
     {
-        if (resolutionDropdownObject == null)
+        resolutionDropdownObject = new GameObject("ResolutionDropdown", typeof(RectTransform), typeof(Image), typeof(ScrollRect));
+        resolutionDropdownObject.transform.SetParent(parent, false);
+
+        Image background = resolutionDropdownObject.GetComponent<Image>();
+        background.sprite = RuntimeSpriteFactory.GetRoundedRectSprite(
+            Mathf.RoundToInt(ResolutionDropdownWidth),
+            Mathf.RoundToInt(ResolutionDropdownHeight),
+            24f);
+        background.color = DropdownBackgroundColor;
+        background.preserveAspect = false;
+
+        RectTransform dropdownRect = resolutionDropdownObject.GetComponent<RectTransform>();
+        dropdownRect.anchorMin = new Vector2(0.5f, 0.5f);
+        dropdownRect.anchorMax = new Vector2(0.5f, 0.5f);
+        dropdownRect.pivot = new Vector2(0.5f, 0f);
+        dropdownRect.sizeDelta = new Vector2(ResolutionDropdownWidth, ResolutionDropdownHeight);
+        dropdownRect.anchoredPosition = new Vector2(160f, 38f);
+
+        GameObject viewportObject = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(RectMask2D));
+        viewportObject.transform.SetParent(resolutionDropdownObject.transform, false);
+
+        Image viewportImage = viewportObject.GetComponent<Image>();
+        viewportImage.color = Color.white;
+        viewportImage.raycastTarget = true;
+
+        RectTransform viewportRect = viewportObject.GetComponent<RectTransform>();
+        viewportRect.anchorMin = Vector2.zero;
+        viewportRect.anchorMax = Vector2.one;
+        viewportRect.offsetMin = new Vector2(14f, 14f);
+        viewportRect.offsetMax = new Vector2(-34f, -14f);
+
+        resolutionContentRect = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
+        resolutionContentRect.SetParent(viewportObject.transform, false);
+        resolutionContentRect.anchorMin = new Vector2(0f, 1f);
+        resolutionContentRect.anchorMax = new Vector2(1f, 1f);
+        resolutionContentRect.pivot = new Vector2(0.5f, 1f);
+        resolutionContentRect.offsetMin = new Vector2(0f, 0f);
+        resolutionContentRect.offsetMax = new Vector2(0f, 0f);
+
+        VerticalLayoutGroup layoutGroup = resolutionContentRect.gameObject.AddComponent<VerticalLayoutGroup>();
+        layoutGroup.childAlignment = TextAnchor.UpperCenter;
+        layoutGroup.childControlWidth = true;
+        layoutGroup.childControlHeight = false;
+        layoutGroup.childForceExpandWidth = true;
+        layoutGroup.childForceExpandHeight = false;
+        layoutGroup.spacing = ResolutionOptionSpacing;
+        layoutGroup.padding = new RectOffset(0, 0, 0, 0);
+
+        ContentSizeFitter fitter = resolutionContentRect.gameObject.AddComponent<ContentSizeFitter>();
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+
+        Scrollbar scrollbar = CreateResolutionScrollbar(resolutionDropdownObject.transform);
+
+        resolutionScrollRect = resolutionDropdownObject.GetComponent<ScrollRect>();
+        resolutionScrollRect.horizontal = false;
+        resolutionScrollRect.vertical = true;
+        resolutionScrollRect.inertia = true;
+        resolutionScrollRect.scrollSensitivity = 28f;
+        resolutionScrollRect.movementType = ScrollRect.MovementType.Clamped;
+        resolutionScrollRect.viewport = viewportRect;
+        resolutionScrollRect.content = resolutionContentRect;
+        resolutionScrollRect.verticalScrollbar = scrollbar;
+        resolutionScrollRect.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
+
+        BuildResolutionOptionButtons();
+    }
+
+    private Scrollbar CreateResolutionScrollbar(Transform parent)
+    {
+        GameObject scrollbarObject = new GameObject("Scrollbar", typeof(RectTransform), typeof(Scrollbar));
+        scrollbarObject.transform.SetParent(parent, false);
+
+        RectTransform scrollbarRect = scrollbarObject.GetComponent<RectTransform>();
+        scrollbarRect.anchorMin = new Vector2(1f, 0f);
+        scrollbarRect.anchorMax = new Vector2(1f, 1f);
+        scrollbarRect.pivot = new Vector2(1f, 0.5f);
+        scrollbarRect.sizeDelta = new Vector2(ResolutionScrollbarWidth, -28f);
+        scrollbarRect.anchoredPosition = new Vector2(-12f, 0f);
+
+        GameObject trackObject = new GameObject("Track", typeof(RectTransform), typeof(Image));
+        trackObject.transform.SetParent(scrollbarObject.transform, false);
+
+        Image trackImage = trackObject.GetComponent<Image>();
+        trackImage.sprite = RuntimeSpriteFactory.GetRoundedRectSprite(
+            Mathf.RoundToInt(ResolutionScrollbarWidth),
+            Mathf.RoundToInt(ResolutionDropdownHeight) - 28,
+            ResolutionScrollbarWidth * 0.5f);
+        trackImage.color = ScrollbarTrackColor;
+        trackImage.preserveAspect = false;
+
+        RectTransform trackRect = trackObject.GetComponent<RectTransform>();
+        RuntimeUiFactory.Stretch(trackRect);
+
+        RectTransform slidingArea = new GameObject("SlidingArea", typeof(RectTransform)).GetComponent<RectTransform>();
+        slidingArea.SetParent(trackObject.transform, false);
+        RuntimeUiFactory.Stretch(slidingArea);
+        slidingArea.offsetMin = new Vector2(ResolutionScrollbarInset, ResolutionScrollbarVerticalPadding);
+        slidingArea.offsetMax = new Vector2(-ResolutionScrollbarInset, -ResolutionScrollbarVerticalPadding);
+
+        GameObject handleObject = new GameObject("Handle", typeof(RectTransform), typeof(Image));
+        handleObject.transform.SetParent(slidingArea, false);
+
+        Image handleImage = handleObject.GetComponent<Image>();
+        handleImage.sprite = RuntimeSpriteFactory.GetRoundedRectSprite(
+            Mathf.RoundToInt(ResolutionScrollbarWidth - (ResolutionScrollbarInset * 2f)),
+            Mathf.RoundToInt(ResolutionDropdownHeight) - 28 - Mathf.RoundToInt(ResolutionScrollbarVerticalPadding * 2f),
+            (ResolutionScrollbarWidth - (ResolutionScrollbarInset * 2f)) * 0.5f);
+        handleImage.color = ScrollbarHandleColor;
+        handleImage.preserveAspect = false;
+
+        RectTransform handleRect = handleObject.GetComponent<RectTransform>();
+        handleRect.anchorMin = Vector2.zero;
+        handleRect.anchorMax = Vector2.one;
+        handleRect.offsetMin = Vector2.zero;
+        handleRect.offsetMax = Vector2.zero;
+
+        Scrollbar scrollbar = scrollbarObject.GetComponent<Scrollbar>();
+        scrollbar.direction = Scrollbar.Direction.BottomToTop;
+        scrollbar.targetGraphic = handleImage;
+        scrollbar.handleRect = handleRect;
+        return scrollbar;
+    }
+
+    private void BuildResolutionOptionButtons()
+    {
+        if (resolutionContentRect == null)
         {
             return;
         }
 
         resolutionOptionButtons.Clear();
         string[] resolutionLabels = GameManager.GetResolutionLabels();
-        int optionCount = Mathf.Max(1, resolutionLabels.Length);
-        float dropdownHeight = 18f + (optionCount * 48f);
-
-        Image dropdownBackground = resolutionDropdownObject.AddComponent<Image>();
-        dropdownBackground.sprite = RuntimeSpriteFactory.GetRoundedRectSprite(280, Mathf.RoundToInt(dropdownHeight), 22f);
-        dropdownBackground.color = new Color(1f, 1f, 1f, 0.96f);
-        dropdownBackground.preserveAspect = false;
-
-        RectTransform dropdownRect = resolutionDropdownObject.GetComponent<RectTransform>();
-        dropdownRect.anchorMin = new Vector2(0.5f, 0.5f);
-        dropdownRect.anchorMax = new Vector2(0.5f, 0.5f);
-        dropdownRect.pivot = new Vector2(0.5f, 0f);
-        dropdownRect.sizeDelta = new Vector2(280f, dropdownHeight);
-        dropdownRect.anchoredPosition = new Vector2(160f, 34f);
-
-        RectTransform contentRoot = new GameObject("Content", typeof(RectTransform)).GetComponent<RectTransform>();
-        contentRoot.SetParent(resolutionDropdownObject.transform, false);
-        RuntimeUiFactory.Stretch(contentRoot);
-        contentRoot.offsetMin = new Vector2(10f, 10f);
-        contentRoot.offsetMax = new Vector2(-10f, -10f);
-
-        VerticalLayoutGroup layoutGroup = contentRoot.gameObject.AddComponent<VerticalLayoutGroup>();
-        layoutGroup.childAlignment = TextAnchor.LowerCenter;
-        layoutGroup.childControlWidth = true;
-        layoutGroup.childControlHeight = false;
-        layoutGroup.childForceExpandWidth = true;
-        layoutGroup.childForceExpandHeight = false;
-        layoutGroup.spacing = 6f;
-        layoutGroup.padding = new RectOffset(0, 0, 0, 0);
-
-        if (resolutionLabels.Length == 0)
-        {
-            CreateResolutionOptionButton(contentRoot, GameManager.GetCurrentResolutionLabel(), -1);
-            return;
-        }
 
         for (int i = 0; i < resolutionLabels.Length; i++)
         {
-            CreateResolutionOptionButton(contentRoot, resolutionLabels[i], i);
+            int optionIndex = i;
+            Button optionButton = CreateResolutionOptionButton(resolutionContentRect, resolutionLabels[i], optionIndex);
+            resolutionOptionButtons.Add(optionButton);
         }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(resolutionContentRect);
+        RefreshResolutionOptionButtons();
     }
 
-    private void CreateResolutionOptionButton(Transform parent, string label, int optionIndex)
+    private Button CreateResolutionOptionButton(Transform parent, string label, int optionIndex)
     {
-        GameObject buttonObject = new GameObject($"ResolutionOption{Mathf.Max(optionIndex, 0)}");
+        GameObject buttonObject = new GameObject($"ResolutionOption{optionIndex}", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
         buttonObject.transform.SetParent(parent, false);
 
-        Image image = buttonObject.AddComponent<Image>();
-        image.sprite = RuntimeSpriteFactory.GetRoundedRectSprite(260, 42, 18f);
+        Image image = buttonObject.GetComponent<Image>();
+        image.sprite = RuntimeSpriteFactory.GetRoundedRectSprite(
+            Mathf.RoundToInt(ResolutionDropdownWidth) - 48,
+            Mathf.RoundToInt(ResolutionOptionHeight),
+            18f);
         image.color = RuntimeUiTheme.ButtonNormalColor;
         image.preserveAspect = false;
 
-        Button button = buttonObject.AddComponent<Button>();
+        Button button = buttonObject.GetComponent<Button>();
         RuntimeUiFactory.ApplyThemeButton(button, image);
         button.onClick.AddListener(() =>
         {
-            if (optionIndex >= 0)
-            {
-                GameManager.SetResolutionByIndex(optionIndex);
-            }
-
-            SetResolutionDropdownOpen(false);
+            GameManager.SetResolutionByIndex(optionIndex);
             RefreshSettingsUi();
+            SetResolutionDropdownOpen(false);
         });
 
-        LayoutElement layoutElement = buttonObject.AddComponent<LayoutElement>();
-        layoutElement.preferredHeight = 42f;
-        layoutElement.minHeight = 42f;
+        LayoutElement layoutElement = buttonObject.GetComponent<LayoutElement>();
+        layoutElement.preferredHeight = ResolutionOptionHeight;
+        layoutElement.minHeight = ResolutionOptionHeight;
         layoutElement.flexibleWidth = 1f;
 
-        RuntimeUiFactory.CreateText(
+        RectTransform buttonRect = buttonObject.GetComponent<RectTransform>();
+        buttonRect.anchorMin = new Vector2(0f, 0.5f);
+        buttonRect.anchorMax = new Vector2(1f, 0.5f);
+        buttonRect.offsetMin = Vector2.zero;
+        buttonRect.offsetMax = Vector2.zero;
+        buttonRect.sizeDelta = new Vector2(0f, ResolutionOptionHeight);
+
+        Text optionLabel = RuntimeUiFactory.CreateText(
             buttonObject.transform,
             "Label",
             label,
-            20,
+            ResolutionOptionFontSize,
             FontStyle.Bold,
             TextAnchor.MiddleCenter,
             RuntimeUiTheme.TextColor,
@@ -954,19 +1121,19 @@ public sealed class RuntimePauseMenu : MonoBehaviour
             new Vector2(0.5f, 0.5f),
             Vector2.zero,
             Vector2.zero);
+        RectTransform labelRect = optionLabel.rectTransform;
+        RuntimeUiFactory.Stretch(labelRect);
+        labelRect.offsetMin = new Vector2(ResolutionOptionHorizontalPadding, 0f);
+        labelRect.offsetMax = new Vector2(-ResolutionOptionHorizontalPadding, 0f);
+        optionLabel.horizontalOverflow = HorizontalWrapMode.Wrap;
+        optionLabel.verticalOverflow = VerticalWrapMode.Truncate;
 
-        resolutionOptionButtons.Add(button);
+        return button;
     }
 
-    private void SetResolutionDropdownOpen(bool isOpen)
+    private bool IsResolutionDropdownOpen()
     {
-        if (resolutionDropdownObject == null)
-        {
-            return;
-        }
-
-        resolutionDropdownObject.SetActive(isOpen);
-        RefreshResolutionOptionButtons();
+        return resolutionDropdownObject != null && resolutionDropdownObject.activeSelf;
     }
 
     private void ToggleResolutionDropdown()
@@ -979,31 +1146,105 @@ public sealed class RuntimePauseMenu : MonoBehaviour
         SetResolutionDropdownOpen(!resolutionDropdownObject.activeSelf);
     }
 
+    private void SetResolutionDropdownOpen(bool isOpen)
+    {
+        if (resolutionDropdownObject == null)
+        {
+            return;
+        }
+
+        resolutionDropdownObject.SetActive(isOpen);
+        if (isOpen)
+        {
+            resolutionDropdownObject.transform.SetAsLastSibling();
+            RefreshResolutionOptionButtons();
+            ScrollToCurrentResolution();
+        }
+    }
+
     private void RefreshResolutionOptionButtons()
     {
         int currentResolutionIndex = GameManager.GetCurrentResolutionIndex();
 
         for (int i = 0; i < resolutionOptionButtons.Count; i++)
         {
-            Button button = resolutionOptionButtons[i];
-            if (button == null)
+            Button optionButton = resolutionOptionButtons[i];
+            if (optionButton == null)
             {
                 continue;
             }
 
             bool isSelected = i == currentResolutionIndex;
-            Image image = button.GetComponent<Image>();
-            if (image != null)
+            Image optionImage = optionButton.GetComponent<Image>();
+            if (optionImage != null)
             {
-                image.color = isSelected ? SliderFillColor : RuntimeUiTheme.ButtonNormalColor;
+                optionImage.color = isSelected ? SliderFillColor : RuntimeUiTheme.ButtonNormalColor;
             }
 
-            Text labelText = button.GetComponentInChildren<Text>();
-            if (labelText != null)
+            Text optionLabel = optionButton.GetComponentInChildren<Text>();
+            if (optionLabel != null)
             {
-                labelText.color = isSelected ? Color.white : RuntimeUiTheme.TextColor;
+                optionLabel.color = isSelected ? Color.white : RuntimeUiTheme.TextColor;
             }
         }
+    }
+
+    private void ScrollToCurrentResolution()
+    {
+        if (resolutionScrollRect == null || resolutionOptionButtons.Count == 0)
+        {
+            return;
+        }
+
+        int currentResolutionIndex = Mathf.Clamp(
+            GameManager.GetCurrentResolutionIndex(),
+            0,
+            resolutionOptionButtons.Count - 1);
+
+        Canvas.ForceUpdateCanvases();
+
+        float contentHeight = resolutionContentRect != null ? resolutionContentRect.rect.height : 0f;
+        float viewportHeight = resolutionScrollRect.viewport != null ? resolutionScrollRect.viewport.rect.height : 0f;
+        if (contentHeight <= viewportHeight || viewportHeight <= 0f)
+        {
+            resolutionScrollRect.verticalNormalizedPosition = 1f;
+            return;
+        }
+
+        float optionSpan = ResolutionOptionHeight + ResolutionOptionSpacing;
+        float targetCenter = (currentResolutionIndex * optionSpan) + (ResolutionOptionHeight * 0.5f);
+        float targetOffset = Mathf.Clamp(targetCenter - (viewportHeight * 0.5f), 0f, contentHeight - viewportHeight);
+        float normalizedPosition = 1f - (targetOffset / (contentHeight - viewportHeight));
+        resolutionScrollRect.verticalNormalizedPosition = normalizedPosition;
+    }
+
+    private void HandleResolutionDropdownOutsideClick()
+    {
+        if (!Input.GetMouseButtonDown(0))
+        {
+            return;
+        }
+
+        Vector2 pointerPosition = Input.mousePosition;
+        if (IsScreenPointWithinRect(resolutionButton != null ? resolutionButton.gameObject : null, pointerPosition)
+            || IsScreenPointWithinRect(resolutionDropdownObject, pointerPosition))
+        {
+            return;
+        }
+
+        SetResolutionDropdownOpen(false);
+    }
+
+    private static bool IsScreenPointWithinRect(GameObject targetObject, Vector2 screenPoint)
+    {
+        if (targetObject == null || !targetObject.activeInHierarchy)
+        {
+            return false;
+        }
+
+        RectTransform rectTransform = targetObject.GetComponent<RectTransform>();
+        return rectTransform != null
+            && RectTransformUtility.RectangleContainsScreenPoint(rectTransform, screenPoint, null);
     }
 
     private RectTransform CreateSettingsRow(Transform parent, string label, Vector2 anchoredPosition)
@@ -1086,7 +1327,6 @@ public sealed class RuntimePauseMenu : MonoBehaviour
         isOpen = true;
         overlayObject.SetActive(true);
         overlayObject.transform.SetAsLastSibling();
-        SetResolutionDropdownOpen(false);
         ShowPausePanel();
         GameManager.SetPaused(true);
         RefreshSettingsUi();
@@ -1126,11 +1366,16 @@ public sealed class RuntimePauseMenu : MonoBehaviour
             pausePanelObject.SetActive(true);
         }
 
-        SetResolutionDropdownOpen(false);
-
         if (settingsPanelObject != null)
         {
             settingsPanelObject.SetActive(false);
+        }
+
+        SetResolutionDropdownOpen(false);
+
+        if (quitConfirmPanelObject != null)
+        {
+            quitConfirmPanelObject.SetActive(false);
         }
     }
 
@@ -1147,7 +1392,33 @@ public sealed class RuntimePauseMenu : MonoBehaviour
         }
 
         SetResolutionDropdownOpen(false);
+
+        if (quitConfirmPanelObject != null)
+        {
+            quitConfirmPanelObject.SetActive(false);
+        }
+
         RefreshSettingsUi();
+    }
+
+    private void ShowQuitConfirmPanel()
+    {
+        if (pausePanelObject != null)
+        {
+            pausePanelObject.SetActive(false);
+        }
+
+        if (settingsPanelObject != null)
+        {
+            settingsPanelObject.SetActive(false);
+        }
+
+        SetResolutionDropdownOpen(false);
+
+        if (quitConfirmPanelObject != null)
+        {
+            quitConfirmPanelObject.SetActive(true);
+        }
     }
 
     private void RefreshSettingsUi()
