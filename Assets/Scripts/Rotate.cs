@@ -8,6 +8,7 @@ public class Rotate : MonoBehaviour
     private const float MinRadius = 1f;
     private const float MaxRadius = 10f;
     private const float ScoringSampleDistance = 0.02f;
+    private const float SameTargetPositionToleranceSq = 0.000001f;
 
     public GameObject target1;
     public GameObject target2;
@@ -276,7 +277,33 @@ public class Rotate : MonoBehaviour
             nextIndex += targets.Length;
         }
 
-        currentTarget = targets[nextIndex];
+        Vector2 currentPosition = currentTarget.position;
+
+        for (int i = 0; i < targets.Length; i++)
+        {
+            Transform candidate = targets[nextIndex];
+            if (!IsSameTargetPosition(currentPosition, candidate))
+            {
+                currentTarget = candidate;
+                return;
+            }
+
+            nextIndex = (nextIndex + direction) % targets.Length;
+            if (nextIndex < 0)
+            {
+                nextIndex += targets.Length;
+            }
+        }
+    }
+
+    private static bool IsSameTargetPosition(Vector2 currentPosition, Transform candidate)
+    {
+        if (candidate == null)
+        {
+            return false;
+        }
+
+        return (((Vector2)candidate.position) - currentPosition).sqrMagnitude <= SameTargetPositionToleranceSq;
     }
 
     private Transform[] GetAvailableTargets()
