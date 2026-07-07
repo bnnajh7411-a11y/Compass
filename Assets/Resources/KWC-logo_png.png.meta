@@ -1,0 +1,442 @@
+fileFormatVersion: 2
+guid: be3ab1000fab7c04c917298ef7b99180
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 8617023095173446430
+    second: KWC-logo_png_0
+  - first:
+      213: 473433636036670850
+    second: KWC-logo_png_1
+  - first:
+      213: -2814238048664090856
+    second: KWC-logo_png_2
+  - first:
+      213: -3816574598975277839
+    second: KWC-logo_png_3
+  - first:
+      213: 1108640928796686547
+    second: KWC-logo_png_4
+  - first:
+      213: -54700504722719476
+    second: KWC-logo_png_5
+  - first:
+      213: -4694381614878288685
+    second: KWC-logo_png_6
+  - first:
+      213: 7501848191152737393
+    second: KWC-logo_png_7
+  - first:
+      213: -6124767267721128164
+    second: KWC-logo_png_8
+  - first:
+      213: 6609141842259856316
+    second: KWC-logo_png_9
+  - first:
+      213: -2516050825163293015
+    second: KWC-logo_png_10
+  - first:
+      213: 7703357460317703860
+    second: KWC-logo_png_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 1
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: KWC-logo_png_0
+      rect:
+        serializedVersion: 2
+        x: 209
+        y: 410
+        width: 149
+        height: 121
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e1b7621a9d0d59770800000000000000
+      internalID: 8617023095173446430
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_1
+      rect:
+        serializedVersion: 2
+        x: 163
+        y: 382
+        width: 26
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 285ffa43269f19600800000000000000
+      internalID: 473433636036670850
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_2
+      rect:
+        serializedVersion: 2
+        x: 187
+        y: 382
+        width: 31
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 8170dfbb761d1f8d0800000000000000
+      internalID: -2814238048664090856
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_3
+      rect:
+        serializedVersion: 2
+        x: 220
+        y: 382
+        width: 21
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 1f4bc419f9dc80bc0800000000000000
+      internalID: -3816574598975277839
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_4
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 382
+        width: 13
+        height: 17
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d8b2680d0fa26f00800000000000000
+      internalID: 1108640928796686547
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_5
+      rect:
+        serializedVersion: 2
+        x: 252
+        y: 382
+        width: 26
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c0db7f64e2aad3ff0800000000000000
+      internalID: -54700504722719476
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_6
+      rect:
+        serializedVersion: 2
+        x: 277
+        y: 382
+        width: 32
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 3d41e0d0bc43adeb0800000000000000
+      internalID: -4694381614878288685
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_7
+      rect:
+        serializedVersion: 2
+        x: 308
+        y: 382
+        width: 12
+        height: 14
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 17cc090fe2beb1860800000000000000
+      internalID: 7501848191152737393
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_8
+      rect:
+        serializedVersion: 2
+        x: 319
+        y: 382
+        width: 10
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: c17da83de94700ba0800000000000000
+      internalID: -6124767267721128164
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_9
+      rect:
+        serializedVersion: 2
+        x: 331
+        y: 382
+        width: 26
+        height: 18
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: cbbc1122d7368bb50800000000000000
+      internalID: 6609141842259856316
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_10
+      rect:
+        serializedVersion: 2
+        x: 356
+        y: 382
+        width: 32
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9ae3059ea11351dd0800000000000000
+      internalID: -2516050825163293015
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: KWC-logo_png_11
+      rect:
+        serializedVersion: 2
+        x: 386
+        y: 382
+        width: 19
+        height: 16
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 4be8718cbc2d7ea60800000000000000
+      internalID: 7703357460317703860
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries: []
+    nameFileIdTable:
+      KWC-logo_png_0: 8617023095173446430
+      KWC-logo_png_1: 473433636036670850
+      KWC-logo_png_10: -2516050825163293015
+      KWC-logo_png_11: 7703357460317703860
+      KWC-logo_png_2: -2814238048664090856
+      KWC-logo_png_3: -3816574598975277839
+      KWC-logo_png_4: 1108640928796686547
+      KWC-logo_png_5: -54700504722719476
+      KWC-logo_png_6: -4694381614878288685
+      KWC-logo_png_7: 7501848191152737393
+      KWC-logo_png_8: -6124767267721128164
+      KWC-logo_png_9: 6609141842259856316
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

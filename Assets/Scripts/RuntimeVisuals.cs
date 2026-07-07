@@ -3,8 +3,13 @@ using UnityEngine;
 
 public static class RuntimeSpriteFactory
 {
+    private const string LogoResourcesPath = "KWC-logo_png";
+    // Trim the transparent page margins around the logo before placing it in UI.
+    // Unity sprite rects use a bottom-left origin.
+    private static readonly Rect LogoTextureRect = new Rect(163f, 383f, 242f, 149f);
     private static Sprite whiteSprite;
     private static Sprite circleSprite;
+    private static Sprite logoSprite;
     private static readonly Dictionary<string, Sprite> roundedRectSprites = new Dictionary<string, Sprite>();
 
     public static Sprite GetWhiteSprite()
@@ -76,6 +81,52 @@ public static class RuntimeSpriteFactory
         return circleSprite;
     }
 
+    public static Sprite GetLogoSprite()
+    {
+        if (logoSprite != null)
+        {
+            return logoSprite;
+        }
+
+        Sprite[] sprites = Resources.LoadAll<Sprite>(LogoResourcesPath);
+        if (sprites != null && sprites.Length > 0)
+        {
+            Texture2D texture = sprites[0].texture;
+            if (texture != null)
+            {
+                return CreateLogoSprite(texture);
+            }
+
+            Sprite largestSprite = sprites[0];
+            for (int i = 1; i < sprites.Length; i++)
+            {
+                Sprite candidate = sprites[i];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                if ((candidate.rect.width * candidate.rect.height)
+                    > (largestSprite.rect.width * largestSprite.rect.height))
+                {
+                    largestSprite = candidate;
+                }
+            }
+
+            logoSprite = largestSprite;
+            return logoSprite;
+        }
+
+        Texture2D loadedTexture = Resources.Load<Texture2D>(LogoResourcesPath);
+        if (loadedTexture != null)
+        {
+            return CreateLogoSprite(loadedTexture);
+        }
+
+        logoSprite = GetWhiteSprite();
+        return logoSprite;
+    }
+
     public static Sprite GetRoundedRectSprite(int width, int height, float cornerRadius)
     {
         width = Mathf.Max(1, width);
@@ -134,6 +185,18 @@ public static class RuntimeSpriteFactory
 
         roundedRectSprites[cacheKey] = sprite;
         return sprite;
+    }
+
+    private static Sprite CreateLogoSprite(Texture2D texture)
+    {
+        logoSprite = Sprite.Create(
+            texture,
+            LogoTextureRect,
+            new Vector2(0.5f, 0.5f),
+            100f);
+        logoSprite.name = "RuntimeKWCLogoSprite";
+        logoSprite.hideFlags = HideFlags.HideAndDontSave;
+        return logoSprite;
     }
 }
 

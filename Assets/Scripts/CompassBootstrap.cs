@@ -135,6 +135,7 @@ public class CompassBootstrap : MonoBehaviour
         }
 
         RuntimePauseMenu.Create(canvasTransform, true);
+        RuntimeUiFactory.CreateCornerLogo(canvasTransform);
         scoreManager.Refresh();
     }
 

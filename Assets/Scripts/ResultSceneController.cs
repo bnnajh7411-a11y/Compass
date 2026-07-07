@@ -96,6 +96,7 @@ public class ResultSceneController : MonoBehaviour
                 LoadMenuScene);
         }
         RuntimePauseMenu.Create(canvas.transform, false);
+        RuntimeUiFactory.CreateCornerLogo(canvas.transform);
     }
 
     private void RefreshUi()

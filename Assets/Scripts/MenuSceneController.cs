@@ -86,6 +86,7 @@ public class MenuSceneController : MonoBehaviour
 
         CreateStageButtons(card, stageCount);
         RuntimePauseMenu.Create(canvas.transform, false);
+        RuntimeUiFactory.CreateCornerLogo(canvas.transform);
     }
 
     private void SelectStageAndLoadMain(int stageIndex)

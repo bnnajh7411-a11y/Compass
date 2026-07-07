@@ -20,6 +20,8 @@ public static class RuntimeUiFactory
     private const float CheckButtonSize = 112f * 1.15f;
     private const float CheckButtonMargin = 24f;
     private const float CardCornerRadius = 36f;
+    private const float LogoHeight = 60f;
+    private const float LogoMargin = 24f;
 
     private static Font defaultFont;
     private static Sprite checkIconSprite;
@@ -85,6 +87,27 @@ public static class RuntimeUiFactory
         Image image = imageObject.AddComponent<Image>();
         image.sprite = sprite ?? RuntimeSpriteFactory.GetWhiteSprite();
         image.color = color;
+        return image;
+    }
+
+    public static Image CreateCornerLogo(Transform parent)
+    {
+        Image image = CreateImage(parent, "Logo", Color.white, RuntimeSpriteFactory.GetLogoSprite());
+        image.raycastTarget = false;
+        image.preserveAspect = true;
+
+        RectTransform rectTransform = image.rectTransform;
+        rectTransform.anchorMin = new Vector2(0f, 1f);
+        rectTransform.anchorMax = new Vector2(0f, 1f);
+        rectTransform.pivot = new Vector2(0f, 1f);
+
+        float aspectRatio = image.sprite != null && image.sprite.rect.height > 0f
+            ? image.sprite.rect.width / image.sprite.rect.height
+            : 1f;
+        rectTransform.sizeDelta = new Vector2(LogoHeight * aspectRatio, LogoHeight);
+        rectTransform.anchoredPosition = new Vector2(LogoMargin, -LogoMargin);
+
+        image.transform.SetAsLastSibling();
         return image;
     }
 
