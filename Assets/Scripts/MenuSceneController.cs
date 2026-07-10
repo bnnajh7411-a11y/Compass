@@ -19,6 +19,13 @@ public class MenuSceneController : MonoBehaviour
     private static readonly Vector2 ControlsBackgroundSize = new Vector2(320f, 204f);
     private const int StageBestFontSize = 18;
     private const int ControlsFontSize = 20;
+    private const string ControlsTextValue =
+        "<조작 방법>\n"
+        + "A/D  중심 교체\n"
+        + "W/S  길이 조절\n"
+        + "R  그림 초기화\n"
+        + "Space  그리기\n"
+        + "Enter  결과 보기";
 
     private bool isTransitioning;
 
@@ -72,7 +79,7 @@ public class MenuSceneController : MonoBehaviour
         Text controlsText = RuntimeUiFactory.CreateText(
             controlsBackground.transform,
             "Controls",
-            "\u003c\uc870\uc791\u0020\ubc29\ubc95\u003e\u000d\n\u0041\u002f\u0044\u0020\u0020\uc911\uc2ec\u0020\uad50\uccb4\u000d\n\u0057\u002f\u0053\u0020\u0020\uae38\uc774\u0020\uc870\uc808\u000d\n\u0052\u0020\u0020\uadf8\ub9bc\u0020\ucd08\uae30\ud654\u000d\n\u0053\u0070\u0061\u0063\u0065\u0020\u0020\uadf8\ub9ac\uae30\u000d\n\u0045\u006e\u0074\u0065\u0072\u0020\u0020\uacb0\uacfc\u0020\ubcf4\uae30",
+            ControlsTextValue,
             ControlsFontSize,
             FontStyle.Bold,
             TextAnchor.MiddleCenter,

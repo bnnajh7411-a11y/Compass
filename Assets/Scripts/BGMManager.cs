@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(AudioSource))]
 [DisallowMultipleComponent]
 public sealed class BGMManager : MonoBehaviour
 {

@@ -4,9 +4,6 @@ using UnityEngine;
 public static class RuntimeSpriteFactory
 {
     private const string LogoResourcesPath = "KWC-logo_png";
-    // Trim the transparent page margins around the logo before placing it in UI.
-    // Unity sprite rects use a bottom-left origin.
-    private static readonly Rect LogoTextureRect = new Rect(163f, 383f, 242f, 149f);
     private static Sprite whiteSprite;
     private static Sprite circleSprite;
     private static Sprite logoSprite;
@@ -91,26 +88,18 @@ public static class RuntimeSpriteFactory
         Sprite[] sprites = Resources.LoadAll<Sprite>(LogoResourcesPath);
         if (sprites != null && sprites.Length > 0)
         {
-            Texture2D texture = sprites[0].texture;
-            if (texture != null)
+            Sprite largestSprite = GetLargestSprite(sprites);
+            if (largestSprite == null)
             {
-                return CreateLogoSprite(texture);
+                logoSprite = GetWhiteSprite();
+                return logoSprite;
             }
 
-            Sprite largestSprite = sprites[0];
-            for (int i = 1; i < sprites.Length; i++)
+            Texture2D texture = largestSprite.texture;
+            if (texture != null)
             {
-                Sprite candidate = sprites[i];
-                if (candidate == null)
-                {
-                    continue;
-                }
-
-                if ((candidate.rect.width * candidate.rect.height)
-                    > (largestSprite.rect.width * largestSprite.rect.height))
-                {
-                    largestSprite = candidate;
-                }
+                Rect combinedRect = GetCombinedSpriteRect(sprites, largestSprite.rect);
+                return CreateLogoSprite(texture, combinedRect, largestSprite.pixelsPerUnit);
             }
 
             logoSprite = largestSprite;
@@ -120,7 +109,10 @@ public static class RuntimeSpriteFactory
         Texture2D loadedTexture = Resources.Load<Texture2D>(LogoResourcesPath);
         if (loadedTexture != null)
         {
-            return CreateLogoSprite(loadedTexture);
+            return CreateLogoSprite(
+                loadedTexture,
+                new Rect(0f, 0f, loadedTexture.width, loadedTexture.height),
+                100f);
         }
 
         logoSprite = GetWhiteSprite();
@@ -187,13 +179,73 @@ public static class RuntimeSpriteFactory
         return sprite;
     }
 
-    private static Sprite CreateLogoSprite(Texture2D texture)
+    private static Sprite GetLargestSprite(IEnumerable<Sprite> sprites)
+    {
+        Sprite largestSprite = null;
+        float largestArea = 0f;
+
+        foreach (Sprite sprite in sprites)
+        {
+            if (sprite == null)
+            {
+                continue;
+            }
+
+            float area = sprite.rect.width * sprite.rect.height;
+            if (largestSprite == null || area > largestArea)
+            {
+                largestSprite = sprite;
+                largestArea = area;
+            }
+        }
+
+        return largestSprite;
+    }
+
+    private static Rect GetCombinedSpriteRect(IEnumerable<Sprite> sprites, Rect fallbackRect)
+    {
+        bool hasValidRect = false;
+        float minX = 0f;
+        float minY = 0f;
+        float maxX = 0f;
+        float maxY = 0f;
+
+        foreach (Sprite sprite in sprites)
+        {
+            if (sprite == null)
+            {
+                continue;
+            }
+
+            Rect rect = sprite.rect;
+            if (!hasValidRect)
+            {
+                minX = rect.xMin;
+                minY = rect.yMin;
+                maxX = rect.xMax;
+                maxY = rect.yMax;
+                hasValidRect = true;
+                continue;
+            }
+
+            minX = Mathf.Min(minX, rect.xMin);
+            minY = Mathf.Min(minY, rect.yMin);
+            maxX = Mathf.Max(maxX, rect.xMax);
+            maxY = Mathf.Max(maxY, rect.yMax);
+        }
+
+        return hasValidRect
+            ? Rect.MinMaxRect(minX, minY, maxX, maxY)
+            : fallbackRect;
+    }
+
+    private static Sprite CreateLogoSprite(Texture2D texture, Rect textureRect, float pixelsPerUnit)
     {
         logoSprite = Sprite.Create(
             texture,
-            LogoTextureRect,
+            textureRect,
             new Vector2(0.5f, 0.5f),
-            100f);
+            pixelsPerUnit > 0f ? pixelsPerUnit : 100f);
         logoSprite.name = "RuntimeKWCLogoSprite";
         logoSprite.hideFlags = HideFlags.HideAndDontSave;
         return logoSprite;

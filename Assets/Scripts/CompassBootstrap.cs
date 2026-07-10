@@ -102,10 +102,6 @@ public class CompassBootstrap : MonoBehaviour
         }
 
         guide.splineContainer = splineContainer;
-        if (guide.checkpointPrefab == null)
-        {
-            guide.checkpointPrefab = CreateCheckpointTemplate();
-        }
         guide.RebuildCheckpoints();
         scoreManager.BindGuide(guide);
 
@@ -600,27 +596,6 @@ public class CompassBootstrap : MonoBehaviour
         Material material = new Material(shader);
         material.color = Color.white;
         return material;
-    }
-
-    private GameObject CreateCheckpointTemplate()
-    {
-        GameObject checkpointObject = new GameObject("CheckpointTemplate");
-        checkpointObject.transform.SetParent(runtimeRoot.transform, false);
-        checkpointObject.SetActive(false);
-
-        SpriteRenderer spriteRenderer = checkpointObject.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = RuntimeSpriteFactory.GetWhiteSprite();
-        spriteRenderer.color = Color.white;
-        spriteRenderer.sortingOrder = 10;
-
-        checkpointObject.transform.localScale = Vector3.one * 0.18f;
-
-        CircleCollider2D collider = checkpointObject.AddComponent<CircleCollider2D>();
-        collider.isTrigger = true;
-        collider.radius = 0.5f;
-
-        checkpointObject.AddComponent<Checkpoint>();
-        return checkpointObject;
     }
 
     private void CleanupRuntime()

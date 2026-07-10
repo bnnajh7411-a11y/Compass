@@ -20,8 +20,8 @@ public static class RuntimeUiFactory
     private const float CheckButtonSize = 112f * 1.15f;
     private const float CheckButtonMargin = 24f;
     private const float CardCornerRadius = 36f;
-    private const float LogoHeight = 60f;
-    private const float LogoMargin = 24f;
+    private const float LogoHeight = 300f;
+    private static readonly Vector2 LogoPosition = new Vector2(-18f, 75f);
 
     private static Font defaultFont;
     private static Sprite checkIconSprite;
@@ -105,7 +105,7 @@ public static class RuntimeUiFactory
             ? image.sprite.rect.width / image.sprite.rect.height
             : 1f;
         rectTransform.sizeDelta = new Vector2(LogoHeight * aspectRatio, LogoHeight);
-        rectTransform.anchoredPosition = new Vector2(LogoMargin, -LogoMargin);
+        rectTransform.anchoredPosition = LogoPosition;
 
         image.transform.SetAsLastSibling();
         return image;

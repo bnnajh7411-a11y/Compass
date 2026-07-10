@@ -4,7 +4,6 @@ using UnityEngine;
 public class ConnectedLine : MonoBehaviour
 {
     [SerializeField] private Rotate rotate;
-    private Transform satellite;
 
     private void Awake()
     {
@@ -12,8 +11,7 @@ public class ConnectedLine : MonoBehaviour
         {
             rotate = Object.FindFirstObjectByType<Rotate>();
         }
-
-        satellite = rotate != null ? rotate.transform : null;
+        enabled = rotate != null;
     }
 
     private void LateUpdate()
@@ -24,18 +22,20 @@ public class ConnectedLine : MonoBehaviour
         }
 
         Transform currentTarget = rotate.CurrentTargetTransform;
-        if (currentTarget == null || satellite == null)
+        if (currentTarget == null)
         {
             return;
         }
 
-        float distance = Vector3.Distance(currentTarget.position, satellite.position);
+        Vector3 currentTargetPosition = currentTarget.position;
+        Vector3 satellitePosition = rotate.transform.position;
+        Vector3 direction = satellitePosition - currentTargetPosition;
 
-        transform.position = (currentTarget.position + satellite.position) / 2.0f;
-
-        transform.localScale = new Vector3(distance, transform.localScale.y, transform.localScale.z);
-
-        Vector3 direction = satellite.position - currentTarget.position;
+        transform.position = currentTargetPosition + (direction * 0.5f);
         transform.right = direction;
+
+        Vector3 localScale = transform.localScale;
+        localScale.x = direction.magnitude;
+        transform.localScale = localScale;
     }
 }
